@@ -101,6 +101,35 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
   .iconbtn,.pill{height:40px}
   .iconbtn{width:40px}
 }
+/* téléphone tactile : un balayage suffit, les points indiquent la progression */
+@media (hover:none) and (pointer:coarse){
+  .bottom .nb,.count{display:none}
+  .bottom{justify-content:center}
+  .dots{gap:7px;padding:6px 8px}
+  .dots i{width:9px;height:9px;border-radius:50%}
+}
+/* téléphone en paysage : l'image prend tout l'écran, les commandes se glissent dans les marges */
+@media (max-height:520px) and (pointer:coarse){
+  #fiche{display:block;padding:0}
+  .stage{position:absolute;inset:0;border:0;border-radius:0}
+  .top{position:absolute;z-index:6;top:max(6px,env(safe-area-inset-top));left:max(6px,env(safe-area-inset-left));
+    flex-direction:column;align-items:stretch;gap:5px;min-height:0;width:auto;pointer-events:none}
+  .top>*{pointer-events:auto}
+  .cap{display:none}
+  .top .iconbtn,.top .pill{height:32px;border-radius:10px;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+  .top .iconbtn{width:32px}
+  .top .iconbtn svg{width:17px;height:17px}
+  .top .pill{padding:0 8px;font-size:11.5px;justify-content:center;min-width:72px}
+  .top .pill[aria-pressed="true"]{background:var(--accent)}
+  .zoom{right:max(6px,env(safe-area-inset-right));bottom:6px;gap:5px}
+  .zoom button{width:34px;height:34px;font-size:19px;border-radius:10px;background:rgba(255,255,255,.82)}
+  .bottom{position:absolute;z-index:6;left:0;right:0;bottom:max(4px,env(safe-area-inset-bottom));pointer-events:none}
+  .mid{pointer-events:auto}
+  .dots{background:rgba(255,255,255,.7);border-radius:12px;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);padding:5px 8px;gap:8px}
+  .dots i{width:8px;height:8px}
+  .hint{display:none}
+}
+.dots i{cursor:pointer}
 @media (max-width:560px) and (min-height:521px){.top{flex-wrap:wrap;row-gap:6px}.cap{order:3;flex-basis:100%}.top .pill{margin-left:auto}.top .pill+.pill{margin-left:0}}
 @media (max-width:420px){.pill{padding:0 10px;font-size:12.5px}.bottom .nb{min-width:90px}}
 @media (prefers-reduced-motion:reduce){.veil,.frame,.badges{transition:none}}
@@ -258,6 +287,7 @@ body.veil .veilmsg{display:grid}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <div class="cap"><span class="sec" id="sec"></span><span class="ttl" id="ttl"></span></div>
+    <button class="iconbtn" id="fsBtn" type="button" aria-label="Plein écran" title="Plein écran" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
     <button class="pill" id="ovBtn" type="button" aria-pressed="false">Vue d'ensemble</button>
     <a class="pill" id="b3d" href="#" target="_blank" rel="noopener" hidden>3D</a>
     <button class="pill" id="whyBtn" type="button" aria-pressed="false">Le pourquoi</button>
@@ -1045,7 +1075,7 @@ let F=null, idx=0, overview=true, why=false, first=true, ovY=0;
       b.innerHTML='<div class="pic"><img alt=""></div><div class="lbl"></div>';
       b.querySelector('img').src='v/f'+f.id+'.webp';
       const l=b.querySelector('.lbl');l.textContent=f.title;const s=document.createElement('small');s.textContent=f.label;l.prepend(s);
-      b.onclick=()=>{location.hash='fiche-'+f.id};
+      b.onclick=()=>{goFull();location.hash='fiche-'+f.id};
       sec.querySelector('.grid').appendChild(b);
     });
     $('groups').appendChild(sec);
@@ -1074,7 +1104,7 @@ function openFiche(f){
     g.append(z);
   });
   ovl.append(g);
-  $('dots').innerHTML='';f.steps.forEach(()=>$('dots').appendChild(document.createElement('i')));
+  $('dots').innerHTML='';f.steps.forEach((st,i)=>{const d=document.createElement('i');d.title=st.t||'';d.onclick=()=>go(i);$('dots').appendChild(d)});
   $('home').hidden=true; $('fiche').hidden=false;
   requestAnimationFrame(()=>{render(false);ui()});
 }
@@ -1105,7 +1135,7 @@ function render(animate){
   sheet.classList.toggle('ov',overview);
   sheet.querySelectorAll('.lyr.ly').forEach(im=>im.classList.toggle('on',+im.dataset.step===idx));
   free=null; $('zReset').hidden=true; sheet.classList.remove('free');
-  const cam=overview?ovCam():fit(r,24);
+  const cam=overview?ovCam():fit(r,matchMedia('(max-height:520px) and (pointer:coarse)').matches?8:24);
   moveTo(cam,animate);
   /* flèche « vue d'ensemble » au coin supérieur droit du cadre zoomé */
   const bo=$('backov'), [SW2,SH2]=stageWH();
@@ -1216,6 +1246,7 @@ stage.addEventListener('pointerup',e=>{
   if(endPtr(e)||sx===null||why)return; const dx=e.clientX-sx, dy=e.clientY-sy; sx=null; drag=null;
   if(free){ if(!moved&&!overview){} return }            /* zoom libre : on se déplace, on ne change pas de séquence */
   if(!overview&&Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.2){go(idx+(dx<0?1:-1));return}
+  if(overview&&!ovCam().pan&&dx<-40&&Math.abs(dx)>Math.abs(dy)*1.2){go(0);return}
   if(moved)return;
   if(!overview){setOverview(true);return}
   const b=stage.getBoundingClientRect(), c=curCam(), [W,H]=stageWH();
@@ -1329,6 +1360,13 @@ async function openSecure(f){
 }
 /* contrôle régulier : si le compte est ouvert ailleurs, on déconnecte cet appareil */
 setInterval(async()=>{ if(!ME||document.hidden)return; const id=F?F.id:FICHES[0].id; const d=await api(id,false); if(!d.ok&&d.reason!=='server')kick(d.reason) },60000);
+
+/* plein écran (hors application installée) */
+const de=document.documentElement, canFull=!!(de.requestFullscreen||de.webkitRequestFullscreen);
+const isApp=()=>matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
+function goFull(){ if(!canFull||isApp()||document.fullscreenElement)return; try{(de.requestFullscreen||de.webkitRequestFullscreen).call(de,{navigationUI:'hide'})}catch(_){} }
+$('fsBtn').hidden=!canFull||isApp();
+$('fsBtn').onclick=()=>{ if(document.fullscreenElement)document.exitFullscreen(); else goFull() };
 
 /* Routage : #fiche-33 */
 /* invitation à usage unique : #invite-<jeton> */
