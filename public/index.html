@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>La Notice</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout : accueil = grille de vignettes dessinées ; fiche = scène plein écran (verso entier + caméra qui zoome sur une séquence), barre haute, barre basse. */
+:root{
+  --paper:#F1F0EC; --bg:#EEF2F5; --surface:#FFFFFF; --fg:#14232F; --muted:#5B6D7B; --line:#D3DCE3;
+  --accent:#1D6FB5; --accent-fg:#FFFFFF; --veil:rgba(241,240,236,.82);
+  --font-ui:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0E161D; --surface:#17222B; --fg:#E6EEF4; --muted:#93A5B3; --line:#2A3946;
+  --accent:#5AA9E6; --accent-fg:#08131C; color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.4 var(--font-ui);
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+img{-webkit-user-drag:none;pointer-events:none}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.view{position:fixed;inset:0;display:flex;flex-direction:column;
+  padding:max(12px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
+
+/* ---------- Accueil ---------- */
+#home{overflow-y:auto;gap:18px}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand h1{margin:0;font-size:22px;letter-spacing:-.02em}
+.brand p{margin:0;color:var(--muted);font-size:13px}
+.group+.group{margin-top:26px}
+.group h2{margin:0 0 10px;font-family:var(--font-mono);font-weight:500;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.card{display:flex;flex-direction:column;gap:8px;padding:0;border:0;background:none;text-align:left}
+.card .pic{aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:var(--paper);border:1px solid var(--line);
+  transition:transform .2s ease, box-shadow .2s ease}
+.card .pic img{width:100%;height:100%;object-fit:contain;display:block;padding:8%}
+.card:hover .pic{transform:translateY(-2px);box-shadow:0 8px 22px rgba(20,35,47,.12)}
+.card .lbl{font-size:13px;font-weight:600;padding:0 2px}
+.card .lbl small{display:block;font-family:var(--font-mono);font-weight:400;font-size:11px;color:var(--muted)}
+
+/* ---------- Fiche ---------- */
+#fiche{gap:8px}
+.top{display:flex;align-items:center;gap:10px;min-height:44px}
+.iconbtn{flex:none;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center}
+.iconbtn svg{width:20px;height:20px}
+.cap{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
+.cap .sec{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cap .ttl{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{flex:none;height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:13.5px;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;text-decoration:none;color:inherit}
+.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.stage{position:relative;flex:1 1 auto;min-height:0;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden;touch-action:none}
+.sheet{position:absolute;left:0;top:0;transform-origin:0 0}
+.sheet.free .badges{opacity:0;pointer-events:none}
+.sheet .lyr{position:absolute;transition:opacity .5s ease}
+.sheet:not(.ov) .lyr.ly:not(.on),.sheet:not(.ov) .lyr.base{opacity:0}
+.tiled{position:relative}
+.tiled img{position:absolute;display:block}
+.sheet svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.zone{fill:transparent;stroke:var(--accent);stroke-width:1.6;stroke-dasharray:7 6;opacity:.45;cursor:pointer;transition:opacity .2s, fill .2s}
+.zone:hover{opacity:1;fill:rgba(29,111,181,.06)}
+.badges{transition:opacity .35s ease}
+.sheet:not(.ov) .badges{opacity:0;pointer-events:none}
+.backov{position:absolute;z-index:3;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:2px solid #fff;
+  background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;box-shadow:0 3px 10px rgba(20,35,47,.25);
+  opacity:0;transform:scale(.6);pointer-events:none;transition:opacity .25s ease, transform .25s ease}
+.backov.on{opacity:1;transform:scale(1);pointer-events:auto;transition-delay:.35s}
+.backov svg{width:20px;height:20px}
+.zoom{position:absolute;right:10px;bottom:10px;z-index:3;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);
+  font-size:22px;font-weight:600;line-height:1;display:grid;place-items:center;box-shadow:0 2px 8px rgba(20,35,47,.12)}
+.zoom button svg{width:20px;height:20px}
+.recto{position:absolute;inset:0;overflow:auto;background:var(--paper);touch-action:pan-x pan-y pinch-zoom}
+.recto .tiled{width:100%;max-width:900px;margin:0 auto}
+.bottom{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bottom .nb{height:48px;min-width:110px;padding:0 18px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:15px}
+.bottom .nb.next{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.bottom .nb:disabled{opacity:.35;cursor:default}
+.mid{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+.count{font-family:var(--font-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.dots{display:flex;gap:4px}
+.dots i{width:14px;height:4px;border-radius:2px;background:var(--line);transition:background .3s}
+.dots i.on{background:var(--accent)}
+.hint{font-size:12px;color:var(--muted);text-align:center;margin:0}
+
+/* téléphone en paysage : on gagne de la hauteur */
+@media (max-height:520px){
+  .view{padding-top:max(6px,env(safe-area-inset-top));padding-bottom:max(6px,env(safe-area-inset-bottom))}
+  #fiche{display:grid;grid-template-columns:1fr auto;grid-template-rows:auto 1fr;gap:6px 8px}
+  .top{grid-column:1/3;min-height:40px}
+  .stage{grid-column:1;grid-row:2}
+  .bottom{grid-column:2;grid-row:2;flex-direction:column;justify-content:center}
+  .bottom .nb{min-width:92px}
+  .hint{display:none}
+  .iconbtn,.pill{height:40px}
+  .iconbtn{width:40px}
+}
+@media (max-width:560px) and (min-height:521px){.top{flex-wrap:wrap;row-gap:6px}.cap{order:3;flex-basis:100%}.top .pill{margin-left:auto}.top .pill+.pill{margin-left:0}}
+@media (max-width:420px){.pill{padding:0 10px;font-size:12.5px}.bottom .nb{min-width:90px}}
+@media (prefers-reduced-motion:reduce){.veil,.frame,.badges{transition:none}}
+
+/* ---------- Protection du contenu ---------- */
+.wm{position:fixed;inset:0;z-index:40;pointer-events:none;background-repeat:repeat}
+body.veil .view{filter:blur(26px) saturate(.6)}
+.veilmsg{position:fixed;inset:0;z-index:45;display:none;place-items:center;text-align:center;padding:24px;color:var(--fg);font-weight:600}
+body.veil .veilmsg{display:grid}
+.veilmsg span{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 18px;box-shadow:0 6px 20px rgba(20,35,47,.15)}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(14,22,29,.55);display:grid;place-items:center;padding:16px}
+.modal .box{background:var(--surface);color:var(--fg);border-radius:16px;max-width:520px;width:100%;padding:22px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.modal h2{margin:0;font-size:19px}
+.modal p,.modal li{margin:0;font-size:14px;line-height:1.45}
+.modal ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.modal label{display:flex;gap:10px;align-items:flex-start;font-size:14px;font-weight:600;cursor:pointer;-webkit-user-select:none}
+.modal input{width:20px;height:20px;flex:none;margin-top:1px;accent-color:var(--accent)}
+.modal .go{height:48px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-fg);font-weight:700;font-size:15px}
+.modal .go:disabled{opacity:.4;cursor:default}
+.modal a{color:var(--accent)}
+.foot{margin-top:auto;padding-top:22px;font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.foot a{color:var(--muted)}
+#cgu{overflow-y:auto;gap:12px}
+#cgu .doc{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:10px;-webkit-user-select:text;user-select:text}
+#cgu h1{font-size:22px;margin:4px 0}
+#cgu h2{font-size:15.5px;margin:12px 0 0}
+#cgu p,#cgu li{font-size:14.5px;line-height:1.5;margin:0}
+#cgu .note{font-size:12.5px;color:var(--muted)}
+@media print{body *{display:none!important}body::after{content:"Impression désactivée : contenu protégé — La Notice";display:block;padding:40px;font:16px sans-serif}}
+
+#login{display:grid;place-items:center;overflow-y:auto}
+#login .card2{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px 20px;display:flex;flex-direction:column;gap:12px}
+#login h1{margin:0;font-size:24px}
+#login p{margin:0;color:var(--muted);font-size:13.5px}
+#login input{height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:0 14px;font:inherit;font-size:16px;-webkit-user-select:text;user-select:text}
+#login .go2{height:50px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-fg);font-weight:700;font-size:15.5px}
+#login .go2:disabled{opacity:.5}
+#login .err{color:#b3261e;font-size:13.5px;min-height:18px}
+.who{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
+.who button{height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:12.5px;font-weight:600}
+</style>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#1D6FB5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="La Notice">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<section class="view" id="login" hidden aria-label="Connexion">
+  <form class="card2" id="loginForm">
+    <h1>La Notice</h1>
+    <p>Protocoles illustrés pour le cabinet. Accès sur invitation, un compte par praticien.</p>
+    <input id="lEmail" type="email" autocomplete="username" placeholder="Adresse e-mail" required>
+    <input id="lPass" type="password" autocomplete="current-password" placeholder="Mot de passe" required>
+    <div class="err" id="lErr" role="alert"></div>
+    <button class="go2" id="lGo" type="submit">Se connecter</button>
+    <p><a href="#cgu">Conditions d'utilisation</a></p>
+  </form>
+</section>
+
+<section class="view" id="home" hidden aria-label="Accueil">
+  <div class="brand">
+    <h1>La Notice</h1>
+    <div class="who"><span id="whoName"></span><button type="button" id="logout">Se déconnecter</button></div>
+  </div>
+  <div id="groups"></div>
+  <div class="foot"><a href="#cgu">Conditions d'utilisation</a><span>© La Notice · Léa Massé &amp; Florian Saysset</span></div>
+</section>
+
+<section class="view" id="cgu" hidden aria-label="Conditions d'utilisation">
+  <div class="top"><button class="iconbtn" id="cguBack" type="button" aria-label="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button></div>
+  <div class="doc">
+    <h1>Conditions générales d'utilisation</h1>
+    <p class="note">Version 1 · projet à faire relire par un juriste avant la mise en vente.</p>
+    <h2>1. Objet</h2>
+    <p>La Notice est une application d'aide à la pratique dentaire. Elle donne accès à des fiches protocoles illustrées, conçues par Léa Massé et Florian Saysset, chirurgiens-dentistes. Elle ne remplace pas le jugement clinique du praticien.</p>
+    <h2>2. Propriété intellectuelle</h2>
+    <p>Les fiches, leurs textes, schémas, illustrations et leur mise en page sont des œuvres protégées par le Code de la propriété intellectuelle. Ils restent la propriété exclusive de leurs auteurs. L'abonnement donne seulement un droit d'utilisation personnel, non exclusif et non transférable, pour la durée de l'abonnement.</p>
+    <h2>3. Diffusion interdite</h2>
+    <p>Toute reproduction, capture, photographie, impression, extraction ou diffusion des fiches, en tout ou partie, par quelque moyen que ce soit (messagerie, réseaux sociaux, groupes, sites, supports de cours), est interdite sans l'accord écrit des auteurs. Une telle diffusion constitue une contrefaçon (articles L.122-4 et L.335-2 du Code de la propriété intellectuelle).</p>
+    <h2>4. Contenu tracé</h2>
+    <p>Chaque affichage porte un filigrane qui identifie l'application, ses auteurs et le compte de l'utilisateur, ainsi que la date de consultation. Les consultations sont enregistrées. Une capture diffusée permet ainsi de retrouver le compte d'origine.</p>
+    <h2>5. Compte personnel</h2>
+    <p>Le compte est strictement personnel. Il ne peut être utilisé que sur un seul appareil à la fois ; une nouvelle connexion ferme la précédente. Une consultation anormale (par exemple toutes les fiches en un temps très court) peut déclencher une vérification.</p>
+    <h2>6. Sanctions</h2>
+    <p>En cas de manquement, l'accès peut être suspendu ou résilié sans remboursement, sans préjudice de toute action en justice.</p>
+    <h2>7. Données personnelles</h2>
+    <p>Les données de compte et de consultation servent uniquement à fournir le service et à protéger le contenu. Elles sont conservées le temps de l'abonnement, puis pendant la durée légale nécessaire. Vous disposez d'un droit d'accès, de rectification et de suppression.</p>
+  </div>
+</section>
+
+<div class="wm" id="wm" aria-hidden="true"></div>
+<div class="veilmsg" id="veilmsg"><span>Contenu masqué · touchez pour revenir</span></div>
+<div class="modal" id="gate" hidden>
+  <div class="box" role="dialog" aria-modal="true" aria-labelledby="gateT">
+    <h2 id="gateT">Contenu protégé</h2>
+    <p>Les fiches de La Notice sont la propriété de leurs auteurs, Léa Massé et Florian Saysset.</p>
+    <ul>
+      <li>Usage strictement personnel, au cabinet ou en formation.</li>
+      <li>Captures, photos, impressions et partages interdits.</li>
+      <li>Chaque affichage est marqué d'un filigrane et les consultations sont enregistrées.</li>
+    </ul>
+    <label><input type="checkbox" id="gateOk"> J'accepte les <a href="#cgu" id="gateCgu">conditions d'utilisation</a></label>
+    <button class="go" id="gateGo" type="button" disabled>Accéder aux fiches</button>
+  </div>
+</div>
+
+<section class="view" id="fiche" hidden aria-label="Fiche">
+  <div class="top">
+    <button class="iconbtn" id="back" type="button" aria-label="Retour à l'accueil">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="cap"><span class="sec" id="sec"></span><span class="ttl" id="ttl"></span></div>
+    <button class="pill" id="ovBtn" type="button" aria-pressed="false">Vue d'ensemble</button>
+    <a class="pill" id="b3d" href="#" target="_blank" rel="noopener" hidden>3D</a>
+    <button class="pill" id="whyBtn" type="button" aria-pressed="false">Le pourquoi</button>
+  </div>
+  <div class="stage" id="stage">
+    <div class="sheet" id="sheet">
+      <svg id="ovl" aria-hidden="false"></svg>
+    </div>
+    <button class="backov" id="backov" type="button" aria-label="Revenir à la vue d'ensemble" title="Vue d'ensemble">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+    </button>
+    <div class="zoom" aria-label="Zoom">
+      <button type="button" id="zIn" aria-label="Agrandir">+</button>
+      <button type="button" id="zOut" aria-label="Réduire">−</button>
+      <button type="button" id="zReset" aria-label="Taille normale" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </div>
+    <div class="recto" id="recto" hidden><div class="tiled" id="rectoBox" role="img" aria-label="Recto de la fiche"></div></div>
+  </div>
+  <div class="bottom">
+    <button class="nb" id="prev" type="button">Précédent</button>
+    <div class="mid"><span class="count" id="count"></span><div class="dots" id="dots" aria-hidden="true"></div></div>
+    <button class="nb next" id="next" type="button">Suivant</button>
+  </div>
+  <p class="hint" id="hint"></p>
+</section>
+
+<script>
+/* Coordonnées des zones : repère de 1000 de large (le verso fait 1000 × 1414). */
+const FICHES=[
+ {
+  "id": "33",
+  "label": "Fiche 33",
+  "group": "Restaurations partielles indirectes",
+  "title": "Préparation d'un onlay",
+  "vignette": "a/f33-vignette.webp",
+  "recto": "a/f33-recto.webp",
+  "size": [
+   1000,
+   1414.05
+  ],
+  "base": {
+   "img": "a/f33/base.webp",
+   "r": [
+    0.0,
+    7.84,
+    1000.0,
+    1155.97
+   ]
+  },
+  "drawOrder": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   9,
+   5,
+   6,
+   7,
+   8
+  ],
+  "steps": [
+   {
+    "sec": "Préparation d'un onlay",
+    "t": "Occlusion",
+    "img": "a/f33/s1.webp",
+    "r": [
+     17.14,
+     34.04,
+     431.19,
+     245.59
+    ]
+   },
+   {
+    "sec": "Préparation d'un onlay",
+    "t": "Dépose et éviction carieuse",
+    "img": "a/f33/s2.webp",
+    "r": [
+     430.22,
+     16.16,
+     1000.0,
+     287.95
+    ]
+   },
+   {
+    "sec": "Préparation d'un onlay",
+    "t": "Dentine infectée : révéler et éliminer",
+    "img": "a/f33/s3.webp",
+    "r": [
+     11.51,
+     250.98,
+     1000.0,
+     564.89
+    ]
+   },
+   {
+    "sec": "Impératifs de préparation",
+    "t": "1 · Parois résiduelles ≥ 2 mm",
+    "img": "a/f33/s4.webp",
+    "r": [
+     0.0,
+     538.93,
+     983.1,
+     831.54
+    ]
+   },
+   {
+    "sec": "Impératifs de préparation",
+    "t": "2 · Réduction tissulaire selon le matériau",
+    "img": "a/f33/s5.webp",
+    "r": [
+     0.0,
+     815.62,
+     1000.0,
+     1016.41
+    ]
+   },
+   {
+    "sec": "Impératifs de préparation",
+    "t": "3 · Angles internes arrondis",
+    "img": "a/f33/s6.webp",
+    "r": [
+     16.41,
+     1016.41,
+     211.56,
+     1186.58
+    ]
+   },
+   {
+    "sec": "Impératifs de préparation",
+    "t": "4 · Angles cavo-superficiels nets",
+    "img": "a/f33/s7.webp",
+    "r": [
+     218.9,
+     988.49,
+     566.6,
+     1188.54
+    ]
+   },
+   {
+    "sec": "Impératifs de préparation",
+    "t": "5 · Pas d'impact occlusal au niveau du joint",
+    "img": "a/f33/s8.webp",
+    "r": [
+     559.5,
+     922.87,
+     783.3,
+     1198.82
+    ]
+   },
+   {
+    "sec": "Impératifs de préparation",
+    "t": "6 · Dépouille marquée",
+    "img": "a/f33/s9.webp",
+    "r": [
+     786.97,
+     999.27,
+     973.31,
+     1379.53
+    ]
+   },
+   {
+    "sec": "Impératifs de préparation",
+    "t": "7 · Limite(s) de finition et point(s) de contact",
+    "img": "a/f33/s10.webp",
+    "r": [
+     0.0,
+     1196.13,
+     1000.0,
+     1403.28
+    ]
+   }
+  ]
+ },
+ {
+  "id": "34",
+  "label": "Fiche 34",
+  "group": "Restaurations partielles indirectes",
+  "title": "Hybridation dentinaire (IDS)",
+  "vignette": "a/f34/vignette.webp",
+  "recto": "a/f34-recto.webp",
+  "size": [
+   1000,
+   1414.05
+  ],
+  "base": {
+   "img": "a/f34/base.webp",
+   "r": [
+    0.0,
+    9.79,
+    1000.0,
+    35.75
+   ]
+  },
+  "drawOrder": [
+   1,
+   2,
+   0,
+   3,
+   5,
+   4
+  ],
+  "steps": [
+   {
+    "sec": "Hybridation dentinaire",
+    "t": "Dépose et finition de la préparation",
+    "img": "a/f34/s1.webp",
+    "r": [
+     29.14,
+     41.63,
+     594.76,
+     243.63
+    ]
+   },
+   {
+    "sec": "Hybridation dentinaire",
+    "t": "Sablage à l'oxyde d'alumine",
+    "img": "a/f34/s2.webp",
+    "r": [
+     525.47,
+     13.71,
+     990.45,
+     289.67
+    ]
+   },
+   {
+    "sec": "Choix du protocole",
+    "t": "Protocole MR3 : mordançage, primer, adhésif chargé",
+    "img": "a/f34/s3.webp",
+    "r": [
+     0.0,
+     262.49,
+     977.23,
+     578.6
+    ]
+   },
+   {
+    "sec": "Choix du protocole",
+    "t": "Protocole universel",
+    "img": "a/f34/s4.webp",
+    "r": [
+     0.0,
+     564.4,
+     969.39,
+     862.63
+    ]
+   },
+   {
+    "sec": "Choix du protocole",
+    "t": "Protocole CDO (Cavity Design Optimization)",
+    "img": "a/f34/s5.webp",
+    "r": [
+     0.0,
+     853.82,
+     969.39,
+     1137.86
+    ]
+   },
+   {
+    "sec": "Finitions",
+    "t": "Finitions et temporisation",
+    "img": "a/f34/s6.webp",
+    "r": [
+     0.0,
+     1139.57,
+     988.98,
+     1405.48
+    ]
+   }
+  ]
+ },
+ {
+  "id": "35",
+  "label": "Fiche 35",
+  "group": "Restaurations partielles indirectes",
+  "title": "Collage d'un onlay",
+  "vignette": "a/f35/vignette.webp",
+  "recto": "a/f35-recto.webp",
+  "size": [
+   1000,
+   1414.05
+  ],
+  "base": {
+   "img": "a/f35/base.webp",
+   "r": [
+    0.0,
+    9.79,
+    1000.0,
+    877.33
+   ]
+  },
+  "drawOrder": [
+   0,
+   2,
+   3,
+   4,
+   1,
+   5,
+   6,
+   7
+  ],
+  "steps": [
+   {
+    "sec": "Avant le collage",
+    "t": "Dépose de la temporisation",
+    "img": "a/f35/s1.webp",
+    "r": [
+     30.36,
+     33.06,
+     361.9,
+     262.73
+    ]
+   },
+   {
+    "sec": "Avant le collage",
+    "t": "Essayage au gel de glycérine",
+    "img": "a/f35/s2.webp",
+    "r": [
+     342.8,
+     29.14,
+     712.29,
+     264.69
+    ]
+   },
+   {
+    "sec": "Avant le collage",
+    "t": "Validation, sans contrôle en occlusion",
+    "img": "a/f35/s3.webp",
+    "r": [
+     632.71,
+     33.06,
+     1000.0,
+     284.77
+    ]
+   },
+   {
+    "sec": "Protocole d'assemblage",
+    "t": "1 · Isolation et nouvel essayage",
+    "img": "a/f35/s4.webp",
+    "r": [
+     16.16,
+     299.22,
+     413.08,
+     861.9
+    ]
+   },
+   {
+    "sec": "Protocole d'assemblage",
+    "t": "2 · Préparation de la pièce : vitrocéramiques, PICN",
+    "img": "a/f35/s5.webp",
+    "r": [
+     312.19,
+     285.75,
+     984.57,
+     607.74
+    ]
+   },
+   {
+    "sec": "Protocole d'assemblage",
+    "t": "2 · Préparation de la pièce : composites",
+    "img": "a/f35/s6.webp",
+    "r": [
+     347.94,
+     616.55,
+     986.53,
+     868.02
+    ]
+   },
+   {
+    "sec": "Protocole d'assemblage",
+    "t": "3 · Préparation de la dent support",
+    "img": "a/f35/s7.webp",
+    "r": [
+     11.75,
+     864.59,
+     992.9,
+     1156.71
+    ]
+   },
+   {
+    "sec": "Protocole d'assemblage",
+    "t": "4 · Assemblage",
+    "img": "a/f35/s8.webp",
+    "r": [
+     31.83,
+     1153.77,
+     1000.0,
+     1407.2
+    ]
+   }
+  ]
+ },
+ {
+  "id": "38",
+  "label": "Fiche 38",
+  "group": "Bridge collé",
+  "title": "Préparation d'un bridge collé",
+  "vignette": "a/f38/vignette.webp",
+  "recto": "a/f38-recto.webp",
+  "size": [
+   1000,
+   1414.05
+  ],
+  "base": {
+   "img": "a/f38/base.webp",
+   "r": [
+    0.0,
+    8.33,
+    1000.0,
+    1158.18
+   ]
+  },
+  "drawOrder": [
+   6,
+   1,
+   3,
+   4,
+   5,
+   7,
+   0,
+   2
+  ],
+  "steps": [
+   {
+    "sec": "Bridge collé mono-ailette",
+    "t": "Vue d'ensemble de la préparation",
+    "img": "a/f38/s1.webp",
+    "r": [
+     26.2,
+     45.3,
+     635.9,
+     412.1
+    ]
+   },
+   {
+    "sec": "Bridge collé mono-ailette",
+    "t": "Principes de la préparation",
+    "img": "a/f38/s2.webp",
+    "r": [
+     717.19,
+     0.98,
+     955.93,
+     208.37
+    ]
+   },
+   {
+    "sec": "Bridge collé mono-ailette",
+    "t": "1 bis · Réduction palatine (optionnelle)",
+    "img": "a/f38/s3.webp",
+    "r": [
+     518.61,
+     170.91,
+     987.76,
+     400.83
+    ]
+   },
+   {
+    "sec": "Étapes de préparation",
+    "t": "1 · Épaulement à angle interne arrondi",
+    "img": "a/f38/s4.webp",
+    "r": [
+     18.36,
+     378.06,
+     958.37,
+     696.87
+    ]
+   },
+   {
+    "sec": "Étapes de préparation",
+    "t": "2 · Boîte de connexion",
+    "img": "a/f38/s5.webp",
+    "r": [
+     26.44,
+     628.31,
+     993.88,
+     937.07
+    ]
+   },
+   {
+    "sec": "Étapes de préparation",
+    "t": "3 · Corniche occlusale",
+    "img": "a/f38/s6.webp",
+    "r": [
+     22.28,
+     871.94,
+     990.21,
+     1190.99
+    ]
+   },
+   {
+    "sec": "Étapes de préparation",
+    "t": "4 · Macropuits",
+    "img": "a/f38/s7.webp",
+    "r": [
+     20.57,
+     1123.16,
+     951.52,
+     1414.05
+    ]
+   },
+   {
+    "sec": "Étapes de préparation",
+    "t": "Finitions",
+    "img": "a/f38/s8.webp",
+    "r": [
+     682.66,
+     1143.73,
+     986.53,
+     1400.34
+    ]
+   }
+  ],
+  "link3d": "https://claude.ai/artifact/EpMQQASUwu7SdRLW1qGoB7"
+ },
+ {
+  "id": "39d",
+  "label": "Fiche 39 · disilicate",
+  "group": "Bridge collé",
+  "title": "Collage d'un bridge en disilicate de lithium",
+  "vignette": "a/f39d/vignette.webp",
+  "recto": "a/f39d-recto.webp",
+  "size": [
+   1000,
+   1414.05
+  ],
+  "base": {
+   "img": "a/f39d/base.webp",
+   "r": [
+    0.0,
+    11.02,
+    1000.0,
+    1414.05
+   ]
+  },
+  "drawOrder": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   7,
+   6
+  ],
+  "steps": [
+   {
+    "sec": "Collage disilicate de lithium",
+    "t": "Le bridge préparé",
+    "img": "a/f39d/s1.webp",
+    "r": [
+     19.1,
+     31.1,
+     509.55,
+     412.1
+    ]
+   },
+   {
+    "sec": "Collage disilicate de lithium",
+    "t": "Principes du collage",
+    "img": "a/f39d/s2.webp",
+    "r": [
+     724.53,
+     0.98,
+     949.56,
+     208.37
+    ]
+   },
+   {
+    "sec": "Collage disilicate de lithium",
+    "t": "Essayage et validation",
+    "img": "a/f39d/s3.webp",
+    "r": [
+     326.4,
+     37.71,
+     1000.0,
+     405.73
+    ]
+   },
+   {
+    "sec": "Protocole d'assemblage",
+    "t": "1 · Isolation",
+    "img": "a/f39d/s4.webp",
+    "r": [
+     3.67,
+     432.66,
+     396.91,
+     1094.03
+    ]
+   },
+   {
+    "sec": "Protocole d'assemblage",
+    "t": "2 · Préparation de la pièce",
+    "img": "a/f39d/s5.webp",
+    "r": [
+     251.71,
+     430.71,
+     998.29,
+     722.58
+    ]
+   },
+   {
+    "sec": "Protocole d'assemblage",
+    "t": "3 · Préparation de la dent support",
+    "img": "a/f39d/s6.webp",
+    "r": [
+     234.57,
+     738.49,
+     1000.0,
+     1079.09
+    ]
+   },
+   {
+    "sec": "Protocole d'assemblage",
+    "t": "3 · Adhésif universel",
+    "img": "a/f39d/s8.webp",
+    "r": [
+     746.33,
+     1070.03,
+     1000.0,
+     1407.2
+    ]
+   },
+   {
+    "sec": "Protocole d'assemblage",
+    "t": "4 · Assemblage",
+    "img": "a/f39d/s7.webp",
+    "r": [
+     3.67,
+     1090.84,
+     740.94,
+     1403.53
+    ]
+   }
+  ]
+ },
+ {
+  "id": "39z",
+  "label": "Fiche 39 · zircone",
+  "group": "Bridge collé",
+  "title": "Collage d'un bridge en zircone",
+  "vignette": "a/f39z/vignette.webp",
+  "recto": "a/f39z-recto.webp",
+  "size": [
+   1000,
+   1414.05
+  ],
+  "base": {
+   "img": "a/f39z/base.webp",
+   "r": [
+    0.0,
+    10.77,
+    1000.0,
+    1414.05
+   ]
+  },
+  "drawOrder": [
+   1,
+   0,
+   2,
+   3,
+   4,
+   5,
+   7,
+   6
+  ],
+  "steps": [
+   {
+    "sec": "Collage zircone",
+    "t": "Le bridge préparé",
+    "img": "a/f39z/s1.webp",
+    "r": [
+     19.1,
+     39.18,
+     503.92,
+     412.1
+    ]
+   },
+   {
+    "sec": "Collage zircone",
+    "t": "Principes du collage",
+    "img": "a/f39z/s2.webp",
+    "r": [
+     724.53,
+     0.98,
+     949.56,
+     208.37
+    ]
+   },
+   {
+    "sec": "Collage zircone",
+    "t": "Essayage et validation",
+    "img": "a/f39z/s3.webp",
+    "r": [
+     326.4,
+     37.71,
+     1000.0,
+     405.73
+    ]
+   },
+   {
+    "sec": "Protocole d'assemblage",
+    "t": "1 · Isolation",
+    "img": "a/f39z/s4.webp",
+    "r": [
+     3.67,
+     432.66,
+     396.91,
+     1094.03
+    ]
+   },
+   {
+    "sec": "Protocole d'assemblage",
+    "t": "2 · Préparation de la pièce",
+    "img": "a/f39z/s5.webp",
+    "r": [
+     251.71,
+     430.71,
+     977.72,
+     728.45
+    ]
+   },
+   {
+    "sec": "Protocole d'assemblage",
+    "t": "3 · Préparation de la dent support",
+    "img": "a/f39z/s6.webp",
+    "r": [
+     234.57,
+     738.49,
+     1000.0,
+     1079.09
+    ]
+   },
+   {
+    "sec": "Protocole d'assemblage",
+    "t": "3 · Primer 10-MDP",
+    "img": "a/f39z/s8.webp",
+    "r": [
+     726.0,
+     1070.03,
+     1000.0,
+     1401.08
+    ]
+   },
+   {
+    "sec": "Protocole d'assemblage",
+    "t": "4 · Assemblage",
+    "img": "a/f39z/s7.webp",
+    "r": [
+     3.67,
+     1090.84,
+     740.94,
+     1403.53
+    ]
+   }
+  ]
+ }
+];
+
+const TILES={"a/f33-recto.webp":[2400,3394,[[0,0,2050,2050,"97d01e8d4eebdc"],[2048,0,352,2050,"71d52700f32ebe"],[0,2048,2050,1346,"92ba385142dc54"],[2048,2048,352,1346,"d4d9b5b21ba8cf"]]],"a/f33/base.webp":[4084,4689,[[0,0,2050,2050,"d47b4d6bfec961"],[2048,0,2036,2050,"2a8f562bd77e9f"],[0,4096,2050,593,"63dd698d6ac99c"],[2048,4096,2036,593,"9011cfcb0ec9f1"]]],"a/f33/s1.webp":[1691,864,[[0,0,1691,864,"9f4c3773d30da7"]]],"a/f33/s10.webp":[4084,846,[[0,0,2050,846,"28ab30dbe0d069"],[2048,0,2036,846,"ec33f22f908b1d"]]],"a/f33/s2.webp":[2327,1110,[[0,0,2050,1110,"cb4369d9897828"],[2048,0,279,1110,"0f667571acabbf"]]],"a/f33/s3.webp":[4037,1282,[[0,0,2050,1282,"460c3700c75618"],[2048,0,1989,1282,"bd88883fa6d8e3"]]],"a/f33/s4.webp":[4015,1195,[[0,0,2050,1195,"2f790b42dcac77"],[2048,0,1967,1195,"dc26658975a730"]]],"a/f33/s5.webp":[4084,820,[[0,0,2050,820,"77b45a3012d5d1"],[2048,0,2036,820,"94d6cc17a9957e"]]],"a/f33/s6.webp":[797,695,[[0,0,797,695,"7de67f380edf73"]]],"a/f33/s7.webp":[1420,817,[[0,0,1420,817,"6c008d992a45e0"]]],"a/f33/s8.webp":[914,1127,[[0,0,914,1127,"c57271cc27f5d0"]]],"a/f33/s9.webp":[761,1553,[[0,0,761,1553,"bd4a25fbed8ecd"]]],"a/f34-recto.webp":[2400,3394,[[0,0,2050,2050,"485be19242baff"],[2048,0,352,2050,"45dfce6bd3d66d"],[0,2048,2050,1346,"065b4aec20971d"],[2048,2048,352,1346,"d251a6999a789c"]]],"a/f34/base.webp":[4084,106,[[0,0,2050,106,"286f6d91afd5e7"],[2048,0,2036,106,"873e9fd76bcfe9"]]],"a/f34/s1.webp":[2310,825,[[0,0,2050,825,"77cbf1c8adbd56"],[2048,0,262,825,"5b77efd5fd561b"]]],"a/f34/s2.webp":[1899,1127,[[0,0,1899,1127,"5ee58053eb4e5a"]]],"a/f34/s3.webp":[3991,1291,[[0,0,2050,1291,"a3c3937cd9873f"],[2048,0,1943,1291,"c6983b5bfeded1"]]],"a/f34/s4.webp":[3959,1218,[[0,0,2050,1218,"32388882c477d6"],[2048,0,1911,1218,"797a70940a5e68"]]],"a/f34/s5.webp":[3959,1160,[[0,0,2050,1160,"fc59d17ec69730"],[2048,0,1911,1160,"9af0c145e5ada8"]]],"a/f34/s6.webp":[4039,1086,[[0,0,2050,1086,"2bf8642daf1164"],[2048,0,1991,1086,"9b27ec21ba70e4"]]],"a/f35-recto.webp":[2400,3394,[[0,0,2050,2050,"ad785ed36f4756"],[2048,0,352,2050,"af3297404e37e5"],[0,2048,2050,1346,"0464b8b358cb5f"],[2048,2048,352,1346,"191016aeae3c40"]]],"a/f35/base.webp":[4084,3543,[[0,0,2050,2050,"ea9077ee24392f"],[2048,0,2036,2050,"05e43a5890fc5b"],[0,2048,2050,1495,"fbecae10b0df1c"],[2048,2048,2036,1495,"ebd2111e9ce443"]]],"a/f35/s1.webp":[1354,938,[[0,0,1354,938,"b9c3ce771d99ad"]]],"a/f35/s2.webp":[1509,962,[[0,0,1509,962,"0c3747a9824170"]]],"a/f35/s3.webp":[1500,1028,[[0,0,1500,1028,"37672d998439aa"]]],"a/f35/s4.webp":[1621,2298,[[0,0,1621,2050,"da6e1d64a5f1ba"],[0,2048,1621,250,"b0888285ed240e"]]],"a/f35/s5.webp":[2746,1315,[[0,0,2050,1315,"11369574eacc81"],[2048,0,698,1315,"eebccaf9574cf5"]]],"a/f35/s6.webp":[2608,1027,[[0,0,2050,1027,"ef1cc5e5679faf"],[2048,0,560,1027,"c5b61effcff252"]]],"a/f35/s7.webp":[4007,1193,[[0,0,2050,1193,"77e5d20e889a71"],[2048,0,1959,1193,"18e022187b9fbb"]]],"a/f35/s8.webp":[3954,1035,[[0,0,2050,1035,"242e5941f4302b"],[2048,0,1906,1035,"39f41c858472ae"]]],"a/f38-recto.webp":[2400,3394,[[0,0,2050,2050,"de1884af674300"],[2048,0,352,2050,"5047f4aa815ce4"],[0,2048,2050,1346,"5ef6e7ed20ef6b"],[2048,2048,352,1346,"f477dccc00bd6e"]]],"a/f38/base.webp":[4084,4696,[[0,0,2050,2050,"7be6c5afdc7a84"],[2048,0,2036,2050,"0624f21cae1cac"],[0,2048,2050,2050,"6bc933762b6a53"],[2048,2048,2036,2050,"a027dacaf91b12"],[0,4096,2050,600,"f1b7a6195ef1b7"],[2048,4096,2036,600,"b9a40031a3883b"]]],"a/f38/s1.webp":[2490,1498,[[0,0,2050,1498,"c066d6ebe38d52"],[2048,0,442,1498,"e6c7fd5215b854"]]],"a/f38/s2.webp":[975,847,[[0,0,975,847,"95afbbe1dfc047"]]],"a/f38/s3.webp":[1916,939,[[0,0,1916,939,"acd377e49d0d69"]]],"a/f38/s4.webp":[3839,1302,[[0,0,2050,1302,"f711821189bef2"],[2048,0,1791,1302,"27aedabc169f97"]]],"a/f38/s5.webp":[3951,1261,[[0,0,2050,1261,"93582c23ab3bed"],[2048,0,1903,1261,"23f971bd6e93fd"]]],"a/f38/s6.webp":[3953,1303,[[0,0,2050,1303,"1cafc10c19d86c"],[2048,0,1905,1303,"983ba0bc248e2e"]]],"a/f38/s7.webp":[3802,1188,[[0,0,2050,1188,"ab61a8758428bc"],[2048,0,1754,1188,"8bdce409b803b1"]]],"a/f38/s8.webp":[1241,1048,[[0,0,1241,1048,"c6ae3ad995a88c"]]],"a/f39d-recto.webp":[2400,3394,[[0,0,2050,2050,"30d32997c32274"],[2048,0,352,2050,"56f1eee6556db6"],[0,2048,2050,1346,"9d3573c7d3c752"],[2048,2048,352,1346,"73eb819db0611e"]]],"a/f39d/base.webp":[4084,5730,[[0,0,2050,2050,"80bab83fec9778"],[2048,0,2036,2050,"48a1b15780bd37"],[0,2048,2050,2050,"a168b3a26698e2"],[2048,2048,2036,2050,"9976d0389b5c46"],[0,4096,2050,1634,"90359fad09fe41"],[2048,4096,2036,1634,"8e0d291a4f5124"]]],"a/f39d/s1.webp":[2003,1556,[[0,0,2003,1556,"af1b0838e47f7f"]]],"a/f39d/s2.webp":[919,847,[[0,0,919,847,"501b79ec02be04"]]],"a/f39d/s3.webp":[2751,1503,[[0,0,2050,1503,"63411ef73a395b"],[2048,0,703,1503,"2f6b5c75732bce"]]],"a/f39d/s4.webp":[1606,2701,[[0,0,1606,2050,"3674771a72d7b2"],[0,2048,1606,653,"55d14b058a0c0e"]]],"a/f39d/s5.webp":[3049,1192,[[0,0,2050,1192,"f5d73ae04ac80a"],[2048,0,1001,1192,"b95292498d0b15"]]],"a/f39d/s6.webp":[3126,1391,[[0,0,2050,1391,"fa0460decd554e"],[2048,0,1078,1391,"9201871a76b38b"]]],"a/f39d/s7.webp":[3011,1277,[[0,0,2050,1277,"6e71277fbf29e6"],[2048,0,963,1277,"eb48d27ea1d303"]]],"a/f39d/s8.webp":[1036,1377,[[0,0,1036,1377,"b966317751bb1c"]]],"a/f39z-recto.webp":[2400,3394,[[0,0,2050,2050,"dd1de17a9cf228"],[2048,0,352,2050,"76986bf8700e94"],[0,2048,2050,1346,"f30773065116c9"],[2048,2048,352,1346,"363413329ff126"]]],"a/f39z/base.webp":[4084,5731,[[0,0,2050,2050,"39a1bfe1fb4de4"],[2048,0,2036,2050,"56773f24dccdd8"],[0,2048,2050,2050,"6ae00d66151f10"],[2048,2048,2036,2050,"4314e4a0b1d7ad"],[0,4096,2050,1635,"20df93021b8ffa"],[2048,4096,2036,1635,"e0f548353b70ed"]]],"a/f39z/s1.webp":[1980,1523,[[0,0,1980,1523,"bf9c6a307efdcc"]]],"a/f39z/s2.webp":[919,847,[[0,0,919,847,"7486ca48680aab"]]],"a/f39z/s3.webp":[2751,1503,[[0,0,2050,1503,"8f4d2321106f57"],[2048,0,703,1503,"c3630b1a9e6224"]]],"a/f39z/s4.webp":[1606,2701,[[0,0,1606,2050,"d2fc798a262815"],[0,2048,1606,653,"fc3793e8848bb1"]]],"a/f39z/s5.webp":[2965,1216,[[0,0,2050,1216,"e03f0da22e71fc"],[2048,0,917,1216,"4967964047e983"]]],"a/f39z/s6.webp":[3126,1391,[[0,0,2050,1391,"f6797f02f9f302"],[2048,0,1078,1391,"89b7adf345ab3f"]]],"a/f39z/s7.webp":[3011,1277,[[0,0,2050,1277,"23c3d2bad73699"],[2048,0,963,1277,"46fb2a193be899"]]],"a/f39z/s8.webp":[1119,1352,[[0,0,1119,1352,"bf1d13c30dd7c2"]]]};
+const $=id=>document.getElementById(id);
+/* image recomposée à partir de tuiles (aucun fichier complet n'est servi) */
+let SIGNED={};
+function tiled(path,cls){
+  const d=document.createElement('div');d.className='tiled '+(cls||'');
+  const m=TILES[path]; if(!m)return d; const [W,H,ts]=m;
+  ts.forEach(([x,y,w,h,n])=>{const im=document.createElement('img');im.src=SIGNED[n]||'';im.alt='';im.draggable=false;
+    im.style.cssText='left:'+(x/W*100)+'%;top:'+(y/H*100)+'%;width:'+(w/W*100)+'%;height:'+(h/H*100)+'%';d.appendChild(im)});
+  d.dataset.ratio=H/W; return d;
+}
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const NS='http://www.w3.org/2000/svg';
+let F=null, idx=0, overview=true, why=false, first=true, ovY=0;
+
+/* ---------- Accueil ---------- */
+(function buildHome(){
+  const groups={};
+  FICHES.forEach(f=>(groups[f.group]=groups[f.group]||[]).push(f));
+  Object.entries(groups).forEach(([g,list])=>{
+    const sec=document.createElement('div');sec.className='group';
+    sec.innerHTML='<h2></h2><div class="grid"></div>';sec.querySelector('h2').textContent=g;
+    list.forEach(f=>{
+      const b=document.createElement('button');b.type='button';b.className='card';
+      b.innerHTML='<div class="pic"><img alt=""></div><div class="lbl"></div>';
+      b.querySelector('img').src='v/f'+f.id+'.webp';
+      const l=b.querySelector('.lbl');l.textContent=f.title;const s=document.createElement('small');s.textContent=f.label;l.prepend(s);
+      b.onclick=()=>{location.hash='fiche-'+f.id};
+      sec.querySelector('.grid').appendChild(b);
+    });
+    $('groups').appendChild(sec);
+  });
+})();
+
+/* ---------- Fiche ---------- */
+const sheet=$('sheet'), stage=$('stage'), ovl=$('ovl');
+function el(tag,attrs){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e}
+function openFiche(f){
+  F=f; idx=0; overview=true; why=false; first=true; ovY=0;
+  const [W,H]=f.size;
+  sheet.style.width=W+'px'; sheet.style.height=H+'px';
+  const rb=tiled(f.recto); rb.id='rectoBox'; rb.style.paddingTop=(rb.dataset.ratio*100)+'%'; $('rectoBox').replaceWith(rb);
+  $('b3d').hidden=!f.link3d; if(f.link3d)$('b3d').href=f.link3d;
+  sheet.querySelectorAll('.lyr').forEach(i=>i.remove());
+  const addImg=(L,cls,i)=>{const im=tiled(L.img,'lyr '+cls);
+    const r=L.r;im.style.cssText='left:'+r[0]+'px;top:'+r[1]+'px;width:'+(r[2]-r[0])+'px;height:'+(r[3]-r[1])+'px';
+    if(i!=null)im.dataset.step=i;sheet.insertBefore(im,ovl);return im};
+  addImg(f.base,'base');
+  (f.drawOrder||f.steps.map((_,i)=>i)).forEach(i=>addImg(f.steps[i],'ly',i));
+  ovl.setAttribute('viewBox','0 0 '+W+' '+H); ovl.innerHTML='';
+  const g=el('g',{class:'badges'});
+  f.steps.forEach((s,i)=>{
+    const r=s.r, z=el('rect',{class:'zone',x:r[0]+3,y:r[1]+3,width:r[2]-r[0]-6,height:r[3]-r[1]-6,rx:8,'aria-label':s.t});
+    g.append(z);
+  });
+  ovl.append(g);
+  $('dots').innerHTML='';f.steps.forEach(()=>$('dots').appendChild(document.createElement('i')));
+  $('home').hidden=true; $('fiche').hidden=false;
+  requestAnimationFrame(()=>{render(false);ui()});
+}
+
+function stageWH(){return [stage.clientWidth,stage.clientHeight]}
+function fit(r,pad){const [W,H]=stageWH();const rw=r[2]-r[0],rh=r[3]-r[1];
+  const k=Math.min((W-2*pad)/rw,(H-2*pad)/rh,3.2);return {cx:(r[0]+r[2])/2,cy:(r[1]+r[3])/2,k}}
+function tf(c){const [W,H]=stageWH();return 'translate('+(W/2-c.cx*c.k)+'px,'+(H/2-c.cy*c.k)+'px) scale('+c.k+')'}
+function curCam(){const [W,H]=stageWH();const m=new DOMMatrix(getComputedStyle(sheet).transform);const k=m.a||1;return {cx:(W/2-m.e)/k,cy:(H/2-m.f)/k,k}}
+function moveTo(t,animate){
+  const final=tf(t);
+  if(animate&&!reduce&&!first){
+    const from=curCam(), dist=Math.hypot(t.cx-from.cx,t.cy-from.cy);
+    const mid={cx:(from.cx+t.cx)/2,cy:(from.cy+t.cy)/2,k:Math.min(from.k,t.k)*Math.max(.6,1-dist/2400)};
+    sheet.style.transform=final;
+    sheet.animate([{transform:tf(from)},{transform:tf(mid),offset:.5},{transform:final}],{duration:Math.min(1050,480+dist*.6),easing:'cubic-bezier(.45,.05,.25,1)'});
+  } else sheet.style.transform=final;
+  first=false;
+}
+function ovCam(){const [W,H]=stageWH(), [SW,SH]=F.size;
+  const kAll=Math.min((W-16)/SW,(H-16)/SH), kW=(W-16)/SW;
+  /* paysage : la fiche entière serait minuscule, on l'ajuste à la largeur et on la fait défiler */
+  if(kW>kAll*1.35){const k=Math.min(kW,kAll*2.6), half=H/2/k;
+    const cy=Math.max(half-8/k,Math.min(SH-half+8/k,ovY||half-8/k));ovY=cy;return {cx:SW/2,cy,k,pan:true}}
+  return {cx:SW/2,cy:SH/2,k:kAll,pan:false}}
+function render(animate){
+  const [W,H]=F.size, s=F.steps[idx], r=s.r, p=6;
+  sheet.classList.toggle('ov',overview);
+  sheet.querySelectorAll('.lyr.ly').forEach(im=>im.classList.toggle('on',+im.dataset.step===idx));
+  free=null; $('zReset').hidden=true; sheet.classList.remove('free');
+  const cam=overview?ovCam():fit(r,24);
+  moveTo(cam,animate);
+  /* flèche « vue d'ensemble » au coin supérieur droit du cadre zoomé */
+  const bo=$('backov'), [SW2,SH2]=stageWH();
+  bo.classList.toggle('on',!overview&&!why);
+  if(!overview){const x=SW2/2+(r[2]+p-cam.cx)*cam.k, y=SH2/2+(r[1]-p-cam.cy)*cam.k;
+    bo.style.left=Math.min(SW2-24,Math.max(24,x))+'px'; bo.style.top=Math.min(SH2-24,Math.max(24,y))+'px'}
+}
+function ui(){
+  const s=F.steps[idx], n=F.steps.length;
+  $('sec').textContent=why?F.label+' · recto':overview?F.label+' · verso':s.sec;
+  $('ttl').textContent=why?'Le pourquoi : indications, littérature, pièges':overview?F.title:s.t;
+  $('count').textContent=(overview||why)?n+' séquences':String(idx+1).padStart(2,'0')+' / '+String(n).padStart(2,'0');
+  $('prev').disabled=why||(!overview&&idx===0); $('next').disabled=why||(!overview&&idx===n-1);
+  $('next').textContent=overview?'Commencer':'Suivant';
+  [...$('dots').children].forEach((d,i)=>d.classList.toggle('on',!overview&&!why&&i===idx));
+  $('ovBtn').setAttribute('aria-pressed',overview&&!why); $('whyBtn').setAttribute('aria-pressed',why);
+  $('recto').hidden=!why; sheet.hidden=why; document.querySelector('.zoom').hidden=why; $('backov').classList.toggle('on',!overview&&!why);
+  $('hint').textContent=why?'Fais défiler pour lire le recto · « Le pourquoi » pour revenir au protocole'
+    :overview?(ovCam().pan?'Fais glisser pour parcourir la fiche · touche une zone pour zoomer dessus · pince pour agrandir':'Touche une zone pour zoomer dessus · pince ou + pour agrandir')
+    :(innerHeight>innerWidth&&innerWidth<600?'Astuce : tourne le téléphone pour agrandir · glisse pour changer de séquence':'Glisse pour changer de séquence · pince ou + pour agrandir · ↶ pour la vue d’ensemble');
+}
+function go(i){if(why)return;idx=Math.max(0,Math.min(F.steps.length-1,i));overview=false;render(true);ui()}
+function setOverview(v){if(why){why=false}if(v&&F){const r=F.steps[idx].r;ovY=(r[1]+r[3])/2}overview=v;render(true);ui()}
+
+$('prev').onclick=()=>overview?null:go(idx-1);
+$('next').onclick=()=>overview?go(0):go(idx+1);
+$('ovBtn').onclick=()=>setOverview(true);
+$('whyBtn').onclick=()=>{why=!why;if(!why){first=true;render(false)}else $('recto').scrollTop=0;ui()};
+$('back').onclick=()=>{location.hash=''};
+$('backov').addEventListener('pointerdown',e=>e.stopPropagation());
+$('backov').addEventListener('pointerup',e=>e.stopPropagation());
+$('backov').onclick=e=>{e.stopPropagation();setOverview(true)};
+
+/* Gestes sur la scène : toucher une zone, balayer, faire défiler, et zoom libre (pincer, molette, boutons) */
+let free=null;                         /* caméra choisie par l'utilisateur quand il zoome librement */
+function baseCam(){return overview?ovCam():fit(F.steps[idx].r,24)}
+function camNow(){return free||baseCam()}
+function clampCam(c){
+  const b=baseCam(), [W,H]=stageWH(), [SW,SH]=F.size;
+  const k=Math.max(b.k,Math.min(c.k,Math.max(b.k*6,5)));
+  if(k<=b.k*1.03)return null;
+  const hx=W/2/k, hy=H/2/k;
+  const cx=SW*k>W?Math.max(hx,Math.min(SW-hx,c.cx)):SW/2;
+  const cy=SH*k>H?Math.max(hy,Math.min(SH-hy,c.cy)):SH/2;
+  return {cx,cy,k};
+}
+function placeBackov(){
+  if(!F||overview)return; const r=F.steps[idx].r,p=6,c=camNow(),[W,H]=stageWH(),bo=$('backov');
+  const x=W/2+(r[2]+p-c.cx)*c.k, y=H/2+(r[1]-p-c.cy)*c.k;
+  bo.style.left=Math.min(W-24,Math.max(24,x))+'px'; bo.style.top=Math.min(H-24,Math.max(24,y))+'px';
+}
+function applyCam(c,animate){
+  free=c?clampCam(c):null;
+  const t=camNow();
+  if(animate&&!reduce){const from=curCam();sheet.style.transform=tf(t);sheet.animate([{transform:tf(from)},{transform:tf(t)}],{duration:260,easing:'ease-out'})}
+  else sheet.style.transform=tf(t);
+  placeBackov(); $('zReset').hidden=!free; sheet.classList.toggle('free',!!free);
+}
+function zoomAt(f,px,py,animate){
+  const c=camNow(),[W,H]=stageWH(), b=stage.getBoundingClientRect();
+  if(px==null){px=b.left+W/2;py=b.top+H/2}
+  const ox=px-b.left-W/2, oy=py-b.top-H/2, wx=c.cx+ox/c.k, wy=c.cy+oy/c.k, k=c.k*f;
+  applyCam({cx:wx-ox/k,cy:wy-oy/k,k},animate);
+}
+$('zIn').onclick=e=>{e.stopPropagation();zoomAt(1.6,null,null,true)};
+$('zOut').onclick=e=>{e.stopPropagation();zoomAt(1/1.6,null,null,true)};
+$('zReset').onclick=e=>{e.stopPropagation();applyCam(null,true)};
+['zIn','zOut','zReset'].forEach(id=>{$(id).addEventListener('pointerdown',e=>e.stopPropagation());$(id).addEventListener('pointerup',e=>e.stopPropagation())});
+
+const pts=new Map();
+let sx=null,sy=null,moved=false,pinch=null,drag=null;
+stage.addEventListener('pointerdown',e=>{
+  if(why)return; try{stage.setPointerCapture(e.pointerId)}catch(_){} pts.set(e.pointerId,[e.clientX,e.clientY]);
+  if(pts.size===2){
+    const [p1,p2]=[...pts.values()];
+    pinch={d:Math.hypot(p1[0]-p2[0],p1[1]-p2[1])||1,mx:(p1[0]+p2[0])/2,my:(p1[1]+p2[1])/2,cam:camNow()};
+    sx=null; drag=null; return;
+  }
+  sx=e.clientX; sy=e.clientY; moved=false;
+  drag={cam:camNow(),ovY};
+});
+stage.addEventListener('pointermove',e=>{
+  if(!pts.has(e.pointerId))return; pts.set(e.pointerId,[e.clientX,e.clientY]);
+  if(pinch&&pts.size>=2){
+    const [p1,p2]=[...pts.values()], d=Math.hypot(p1[0]-p2[0],p1[1]-p2[1])||1;
+    const mx=(p1[0]+p2[0])/2, my=(p1[1]+p2[1])/2, b=stage.getBoundingClientRect(), [W,H]=stageWH(), c=pinch.cam;
+    const wx=c.cx+(pinch.mx-b.left-W/2)/c.k, wy=c.cy+(pinch.my-b.top-H/2)/c.k, k=c.k*d/pinch.d;
+    applyCam({cx:wx-(mx-b.left-W/2)/k,cy:wy-(my-b.top-H/2)/k,k}); return;
+  }
+  if(sx===null||!drag)return;
+  const dx=e.clientX-sx, dy=e.clientY-sy; if(Math.hypot(dx,dy)>10)moved=true;
+  if(free){const c=drag.cam;applyCam({cx:c.cx-dx/c.k,cy:c.cy-dy/c.k,k:c.k})}
+  else if(overview&&ovCam().pan){const c=ovCam();ovY=drag.ovY-dy/c.k;sheet.style.transform=tf(ovCam())}
+});
+stage.addEventListener('wheel',e=>{
+  if(why||!F)return; e.preventDefault();
+  if(!e.ctrlKey&&!free&&overview&&ovCam().pan){ovY+=e.deltaY/ovCam().k;sheet.style.transform=tf(ovCam());return}
+  if(!e.ctrlKey&&free&&Math.abs(e.deltaX)>Math.abs(e.deltaY)){const c=free;applyCam({cx:c.cx+e.deltaX/c.k,cy:c.cy,k:c.k});return}
+  zoomAt(Math.exp(-e.deltaY*(e.ctrlKey?0.01:0.0025)),e.clientX,e.clientY);
+},{passive:false});
+function endPtr(e){
+  pts.delete(e.pointerId);
+  if(pinch){if(pts.size===0)pinch=null; sx=null; return true}
+  return false;
+}
+stage.addEventListener('pointercancel',e=>{endPtr(e);sx=null;drag=null});
+stage.addEventListener('pointerup',e=>{
+  if(endPtr(e)||sx===null||why)return; const dx=e.clientX-sx, dy=e.clientY-sy; sx=null; drag=null;
+  if(free){ if(!moved&&!overview){} return }            /* zoom libre : on se déplace, on ne change pas de séquence */
+  if(!overview&&Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.2){go(idx+(dx<0?1:-1));return}
+  if(moved)return;
+  if(!overview){setOverview(true);return}
+  const b=stage.getBoundingClientRect(), c=curCam(), [W,H]=stageWH();
+  const wx=c.cx+(e.clientX-b.left-W/2)/c.k, wy=c.cy+(e.clientY-b.top-H/2)/c.k;
+  let best=-1,bd=1e9;
+  F.steps.forEach((s,i)=>{const r=s.r;
+    if(wx>=r[0]&&wx<=r[2]&&wy>=r[1]&&wy<=r[3]){const a=(r[2]-r[0])*(r[3]-r[1]);if(a<bd){bd=a;best=i}}});
+  if(best>=0)go(best);
+});
+addEventListener('keydown',e=>{
+  if($('fiche').hidden||e.altKey||e.ctrlKey||e.metaKey)return;
+  const k=e.key;
+  if(k==='ArrowRight'){e.preventDefault();overview?go(0):go(idx+1)}
+  else if(k==='ArrowLeft'){e.preventDefault();if(!overview)go(idx-1)}
+  else if(k==='o'||k==='O'||k==='Escape'){e.preventDefault();setOverview(true)}
+});
+/* ---------- Protection du contenu ---------- */
+let VIEWER='';                         /* nom et e-mail du dentiste connecté */
+function stamp(){const d=new Date(),p=n=>String(n).padStart(2,'0');return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes())}
+function drawWatermark(){
+  const l1='LA NOTICE · Léa Massé & Florian Saysset', l2=(VIEWER?VIEWER+' · ':'')+'consulté le '+stamp();
+  const esc=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="420" height="260"><g transform="rotate(-28 210 130)" font-family="Helvetica,Arial,sans-serif" text-anchor="middle" fill="rgba(20,35,47,0.10)">'
+   +'<text x="210" y="122" font-size="17" font-weight="700" letter-spacing="1.5">'+esc(l1)+'</text>'
+   +'<text x="210" y="146" font-size="13">'+esc(l2)+'</text></g></svg>';
+  $('wm').style.backgroundImage='url("data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)+'")';
+}
+drawWatermark(); setInterval(drawWatermark,60000);
+['contextmenu','dragstart','selectstart','copy','cut'].forEach(t=>addEventListener(t,e=>{if(!(e.target.closest&&e.target.closest('#cgu .doc')))e.preventDefault()},true));
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if((e.ctrlKey||e.metaKey)&&(k==='p'||k==='s')){e.preventDefault();e.stopPropagation()}},true);
+addEventListener('beforeprint',()=>document.body.classList.add('veil'));
+addEventListener('afterprint',()=>document.body.classList.remove('veil'));
+try{window.print=()=>{}}catch(_){}
+/* flou dès que l'app passe en arrière-plan ou perd le focus */
+const veil=on=>document.body.classList.toggle('veil',on);
+document.addEventListener('visibilitychange',()=>veil(document.hidden));
+addEventListener('blur',()=>veil(true));
+addEventListener('focus',()=>veil(false));
+addEventListener('pageshow',()=>veil(document.hidden));
+$('veilmsg').addEventListener('pointerdown',()=>{veil(false);try{window.focus()}catch(_){}});
+
+/* ---------- Comptes (Supabase) ---------- */
+const sb=window.supabase.createClient('https://aszdfmpwyhpcsokrwmog.supabase.co','sb_publishable_O85LeRosp83i52TAjaeeYg__2MfOGiJ',{auth:{persistSession:true,autoRefreshToken:true}});
+function deviceId(){let d='';try{d=localStorage.getItem('notice-device')||''}catch(_){}
+  if(!d){d=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now());try{localStorage.setItem('notice-device',d)}catch(_){}}return d}
+let ME=null, accepted=false, KICK='';
+const MSG={other_device:'Votre compte vient d’être ouvert sur un autre appareil. Un seul appareil peut être connecté à la fois.',
+  not_approved:'Ce compte n’est pas encore activé. Contactez La Notice.',not_signed_in:'Session expirée, reconnectez-vous.'};
+function show(v){['login','home','fiche','cgu'].forEach(id=>$(id).hidden=id!==v)}
+async function kick(reason){KICK=MSG[reason]||'';ME=null;try{await sb.auth.signOut({scope:'local'})}catch(_){}location.hash='';route()}
+async function token(){const {data}=await sb.auth.getSession();return data.session&&data.session.access_token}
+async function api(fiche,log){
+  const t=await token(); if(!t)return {ok:false,reason:'not_signed_in'};
+  const r=await fetch('/api/open',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},
+    body:JSON.stringify({fiche,device:deviceId(),log})});
+  try{return await r.json()}catch(_){return {ok:false,reason:'server'}}
+}
+$('loginForm').addEventListener('submit',async e=>{
+  e.preventDefault(); $('lErr').textContent=''; $('lGo').disabled=true;
+  const {error}=await sb.auth.signInWithPassword({email:$('lEmail').value.trim(),password:$('lPass').value});
+  if(error){$('lErr').textContent='E-mail ou mot de passe incorrect.';$('lGo').disabled=false;return}
+  const {data:c}=await sb.rpc('claim_device',{p_device:deviceId()});
+  if(!c||!c.ok){$('lGo').disabled=false;return kick((c&&c.reason)||'not_signed_in')}
+  try{await sb.auth.signOut({scope:'others'})}catch(_){}   /* ferme les autres sessions */
+  $('lPass').value=''; $('lGo').disabled=false; KICK=''; await loadMe(c); route();
+});
+async function loadMe(c){
+  if(!c){const {data:u}=await sb.auth.getUser(); if(!u||!u.user){ME=null;return}
+    const {data:p}=await sb.from('profiles').select('full_name,email,cgu_accepted_at,approved').eq('id',u.user.id).single();
+    if(!p||!p.approved){ME=null;return}
+    c={name:p.full_name,email:p.email,cgu:!!p.cgu_accepted_at}}
+  ME=c; accepted=!!c.cgu; VIEWER=c.name+' · '+c.email; drawWatermark(); $('whoName').textContent=c.name;
+}
+$('logout').onclick=async()=>{ME=null;try{await sb.auth.signOut({scope:'local'})}catch(_){}location.hash='';route()};
+
+/* acceptation des conditions d'utilisation, enregistrée sur le compte */
+function gate(){$('gate').hidden=!ME||accepted||location.hash==='#cgu'}
+$('gateOk').onchange=()=>{$('gateGo').disabled=!$('gateOk').checked};
+$('gateGo').onclick=async()=>{$('gateGo').disabled=true;await sb.rpc('accept_cgu');accepted=true;gate();route()};
+$('cguBack').onclick=()=>{history.length>1?history.back():(location.hash='')};
+addEventListener('resize',()=>{if(F&&!$('fiche').hidden&&!why){first=true;render(false);ui()}});
+
+/* ouverture sécurisée d'une fiche : liens de tuiles signés, valables 5 minutes */
+let opening=0;
+async function openSecure(f){
+  const my=++opening; const d=await api(f.id,true);
+  if(my!==opening)return;
+  if(!d.ok){ if(d.reason==='cgu'){accepted=false;gate();return} return kick(d.reason) }
+  SIGNED=d.urls; openFiche(f);
+}
+/* contrôle régulier : si le compte est ouvert ailleurs, on déconnecte cet appareil */
+setInterval(async()=>{ if(!ME||document.hidden)return; const id=F?F.id:FICHES[0].id; const d=await api(id,false); if(!d.ok&&d.reason!=='server')kick(d.reason) },60000);
+
+/* Routage : #fiche-33 */
+function route(){
+  if(location.hash==='#cgu'){show('cgu');$('cgu').scrollTop=0;$('gate').hidden=true;return}
+  if(!ME){show('login');$('lErr').textContent=KICK;$('gate').hidden=true;return}
+  gate();
+  const m=location.hash.match(/^#fiche-(\w+)$/), f=m&&accepted&&FICHES.find(x=>x.id===m[1]);
+  if(f){ if(!F||F.id!==f.id||$('fiche').hidden){show('home');openSecure(f)} }
+  else {show('home');F=null}
+}
+addEventListener('hashchange',route);
+(async()=>{ if(await token())await loadMe(); route(); })();
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}
+</script>
+</body>
+</html>
