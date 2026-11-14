@@ -131,10 +131,10 @@ body.veil .veilmsg{display:grid}
 #cgu .note{font-size:12.5px;color:var(--muted)}
 @media print{body *{display:none!important}body::after{content:"Impression désactivée : contenu protégé — La Notice";display:block;padding:40px;font:16px sans-serif}}
 
-#login{display:grid;place-items:center;overflow-y:auto}
-#login .card2{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px 20px;display:flex;flex-direction:column;gap:12px}
-#login h1{margin:0;font-size:24px}
-#login p{margin:0;color:var(--muted);font-size:13.5px}
+#login,#invite{display:grid;place-items:center;overflow-y:auto}
+#login .card2,#invite .card2{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px 20px;display:flex;flex-direction:column;gap:12px}
+#login h1,#invite h1{margin:0;font-size:24px}
+#login p,#invite p{margin:0;color:var(--muted);font-size:13.5px}
 #login input{height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:0 14px;font:inherit;font-size:16px;-webkit-user-select:text;user-select:text}
 #login .go2{height:50px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-fg);font-weight:700;font-size:15.5px}
 #login .go2:disabled{opacity:.5}
@@ -145,6 +145,19 @@ body.veil .veilmsg{display:grid}
 #login .err{color:#b3261e;font-size:13.5px;min-height:18px}
 .who{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
 .who button{height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:12.5px;font-weight:600}
+
+#invite .gbtn{height:50px;border-radius:12px;border:1px solid var(--line);background:#fff;color:#1f1f1f;font-weight:600;font-size:15.5px;display:flex;align-items:center;justify-content:center;gap:10px;width:100%}
+#invite .gbtn svg{width:20px;height:20px}
+#invite .err{color:#b3261e;font-size:13.5px;min-height:18px}
+.adm{max-width:560px!important;max-height:86vh;overflow:auto}
+.adm .row{display:flex;gap:8px}
+.adm input[type=text]{flex:1;width:auto;height:44px;border-radius:10px;border:1px solid var(--line);padding:0 12px;font-size:15px;background:var(--bg,#fff);color:var(--fg)}
+.adm .go{padding:0 16px;height:44px;width:auto}
+.adm .lnk{display:flex;gap:8px;align-items:center;background:rgba(0,0,0,.05);border-radius:10px;padding:8px 10px;font-size:12.5px;word-break:break-all}
+.adm .lnk button,.adm .it button{height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:12.5px;flex:none}
+.adm .it{display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid var(--line);padding:8px 0;font-size:13.5px}
+.adm .it small{display:block;color:var(--muted);font-size:12px}
+.adm .cl{align-self:flex-end;height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:600}
 </style>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#1D6FB5">
@@ -172,10 +185,20 @@ body.veil .veilmsg{display:grid}
   </form>
 </section>
 
+<section class="view" id="invite" hidden aria-label="Invitation">
+  <div class="card2">
+    <h1>La Notice</h1>
+    <p id="invTxt">Vous êtes invité(e) à rejoindre La Notice, protocoles illustrés pour le cabinet. Connectez-vous avec votre compte Google pour activer votre accès personnel.</p>
+    <button class="gbtn" id="invGo" type="button"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg> Continuer avec Google</button>
+    <div class="err" id="invErr" role="alert"></div>
+    <p><a href="#cgu">Conditions d'utilisation</a></p>
+  </div>
+</section>
+
 <section class="view" id="home" hidden aria-label="Accueil">
   <div class="brand">
     <h1>La Notice</h1>
-    <div class="who"><span id="whoName"></span><button type="button" id="logout">Se déconnecter</button></div>
+    <div class="who"><span id="whoName"></span><button type="button" id="admBtn" hidden>Invitations</button><button type="button" id="logout">Se déconnecter</button></div>
   </div>
   <div id="groups"></div>
   <div class="foot"><a href="#cgu">Conditions d'utilisation</a><span>© La Notice · Léa Massé &amp; Florian Saysset</span></div>
@@ -205,6 +228,16 @@ body.veil .veilmsg{display:grid}
 
 <div class="wm" id="wm" aria-hidden="true"></div>
 <div class="veilmsg" id="veilmsg"><span>Contenu masqué · touchez pour revenir</span></div>
+<div class="modal" id="adm" hidden>
+  <div class="box adm" role="dialog" aria-modal="true" aria-labelledby="admT">
+    <h2 id="admT">Invitations</h2>
+    <p>Chaque lien est à usage unique et valable 7 jours. La personne se connecte avec son compte Google : son accès est alors activé.</p>
+    <div class="row"><input type="text" id="admLbl" placeholder="Nom du dentiste (pour vous repérer)" maxlength="80"><button class="go" id="admNew" type="button">Créer le lien</button></div>
+    <div class="lnk" id="admOut" hidden><span id="admUrl"></span><button type="button" id="admCopy">Copier</button></div>
+    <div id="admList"></div>
+    <button class="cl" id="admClose" type="button">Fermer</button>
+  </div>
+</div>
 <div class="modal" id="gate" hidden>
   <div class="box" role="dialog" aria-modal="true" aria-labelledby="gateT">
     <h2 id="gateT">Contenu protégé</h2>
@@ -1230,8 +1263,8 @@ function deviceId(){let d='';try{d=localStorage.getItem('notice-device')||''}cat
   if(!d){d=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now());try{localStorage.setItem('notice-device',d)}catch(_){}}return d}
 let ME=null, accepted=false, KICK='';
 const MSG={other_device:'Votre compte vient d’être ouvert sur un autre appareil. Un seul appareil peut être connecté à la fois.',
-  not_approved:'Cette adresse n’est pas encore autorisée. Demandez votre accès à La Notice avec l’adresse e-mail de votre compte Google.',not_signed_in:'Session expirée, reconnectez-vous.'};
-function show(v){['login','home','fiche','cgu'].forEach(id=>$(id).hidden=id!==v)}
+  not_approved:'Cette adresse n’est pas encore autorisée. Demandez votre accès à La Notice avec l’adresse e-mail de votre compte Google.',not_signed_in:'Session expirée, reconnectez-vous.',invite_invalid:'Cette invitation n’est plus valable (déjà utilisée ou expirée). Demandez-en une nouvelle à La Notice.'};
+function show(v){['login','invite','home','fiche','cgu'].forEach(id=>$(id).hidden=id!==v)}
 async function kick(reason){KICK=MSG[reason]||'';ME=null;try{await sb.auth.signOut({scope:'local'})}catch(_){}location.hash='';route()}
 async function token(){const {data}=await sb.auth.getSession();return data.session&&data.session.access_token}
 async function api(fiche,log){
@@ -1259,6 +1292,12 @@ $('gGo').onclick=async()=>{
 async function finishOAuth(){
   let pending=false; try{pending=sessionStorage.getItem('notice-oauth')==='1';sessionStorage.removeItem('notice-oauth')}catch(_){}
   if(!pending)return true;
+  let inv=''; try{inv=localStorage.getItem('notice-invite')||''}catch(_){}
+  if(inv){
+    const {data:r}=await sb.rpc('redeem_invite',{p_token:inv});
+    if(r&&r.ok){try{localStorage.removeItem('notice-invite')}catch(_){}}
+    else if(r&&r.reason==='invite_invalid'){try{localStorage.removeItem('notice-invite')}catch(_){}; await kick('invite_invalid');return false}
+  }
   const {data:c}=await sb.rpc('claim_device',{p_device:deviceId()});
   if(!c||!c.ok){await kick((c&&c.reason)||'not_signed_in');return false}
   try{await sb.auth.signOut({scope:'others'})}catch(_){}
@@ -1266,9 +1305,9 @@ async function finishOAuth(){
 }
 async function loadMe(c){
   if(!c){const {data:u}=await sb.auth.getUser(); if(!u||!u.user){ME=null;return}
-    const {data:p}=await sb.from('profiles').select('full_name,email,cgu_accepted_at,approved').eq('id',u.user.id).single();
+    const {data:p}=await sb.from('profiles').select('full_name,email,cgu_accepted_at,approved,is_admin').eq('id',u.user.id).single();
     if(!p||!p.approved){KICK=MSG.not_approved;ME=null;try{await sb.auth.signOut({scope:'local'})}catch(_){}return}
-    c={name:p.full_name,email:p.email,cgu:!!p.cgu_accepted_at}}
+    c={name:p.full_name,email:p.email,cgu:!!p.cgu_accepted_at,admin:!!p.is_admin}}
   ME=c; accepted=!!c.cgu; VIEWER=c.name+' · '+c.email; drawWatermark(); $('whoName').textContent=c.name;
 }
 $('logout').onclick=async()=>{ME=null;try{await sb.auth.signOut({scope:'local'})}catch(_){}location.hash='';route()};
@@ -1292,7 +1331,54 @@ async function openSecure(f){
 setInterval(async()=>{ if(!ME||document.hidden)return; const id=F?F.id:FICHES[0].id; const d=await api(id,false); if(!d.ok&&d.reason!=='server')kick(d.reason) },60000);
 
 /* Routage : #fiche-33 */
+/* invitation à usage unique : #invite-<jeton> */
+const INV=()=>{const m=location.hash.match(/^#invite-([\w-]+)$/);return m&&m[1]};
+async function showInvite(t){
+  show('invite'); $('gate').hidden=true; $('invErr').textContent='';
+  try{localStorage.setItem('notice-invite',t)}catch(_){}
+  const {data:r}=await sb.rpc('invite_status',{p_token:t});
+  const ok=r&&r.ok; $('invGo').hidden=!ok;
+  $('invTxt').textContent=ok?'Vous êtes invité(e) à rejoindre La Notice, protocoles illustrés pour le cabinet. Connectez-vous avec votre compte Google pour activer votre accès personnel.'
+    :(r&&r.reason==='used'?'Cette invitation a déjà été utilisée.':r&&r.reason==='expired'?'Cette invitation a expiré.':'Cette invitation n’est pas valable.')+' Demandez-en une nouvelle à La Notice.';
+}
+$('invGo').onclick=()=>$('gGo').onclick();
+/* administration : créer et suivre les invitations */
+const stLbl={open:'En attente',used:'Utilisée',expired:'Expirée',revoked:'Annulée'};
+async function admLoad(){
+  const {data:r}=await sb.rpc('list_invite_links'); const L=$('admList'); L.textContent='';
+  if(!r||!r.ok){L.textContent='Liste indisponible.';return}
+  r.items.forEach(i=>{
+    const d=document.createElement('div'); d.className='it';
+    const a=document.createElement('div'); const b=document.createElement('b'); b.textContent=i.label||'Sans nom';
+    const sm=document.createElement('small'); const fr=x=>new Date(x).toLocaleDateString('fr-FR');
+    sm.textContent=stLbl[i.status]+(i.status==='used'?' · '+(i.used_by||'')+' ('+(i.used_email||'')+') le '+fr(i.used_at):i.status==='open'?' · jusqu’au '+fr(i.expires_at):'');
+    a.append(b,sm); d.append(a);
+    if(i.status==='open'){
+      const c=document.createElement('button'); c.type='button'; c.textContent='Copier';
+      c.onclick=async()=>{try{await navigator.clipboard.writeText(location.origin+'/#invite-'+i.token);c.textContent='Copié'}catch(_){prompt('Lien',location.origin+'/#invite-'+i.token)}};
+      const x=document.createElement('button'); x.type='button'; x.textContent='Annuler';
+      x.onclick=async()=>{await sb.rpc('revoke_invite_link',{p_token:i.token});admLoad()};
+      const w=document.createElement('div'); w.style.cssText='display:flex;gap:6px'; w.append(c,x); d.append(w);
+    }
+    L.append(d);
+  });
+}
+$('admBtn').onclick=()=>{$('adm').hidden=false;$('admOut').hidden=true;admLoad()};
+$('admClose').onclick=()=>{$('adm').hidden=true};
+$('admNew').onclick=async()=>{
+  $('admNew').disabled=true;
+  const {data:r}=await sb.rpc('create_invite_link',{p_label:$('admLbl').value.trim()});
+  $('admNew').disabled=false; if(!r||!r.ok)return;
+  const u=location.origin+'/#invite-'+r.token; $('admUrl').textContent=u; $('admOut').hidden=false; $('admLbl').value='';
+  try{await navigator.clipboard.writeText(u);$('admCopy').textContent='Copié'}catch(_){$('admCopy').textContent='Copier'}
+  admLoad();
+};
+$('admCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('admUrl').textContent);$('admCopy').textContent='Copié'}catch(_){}};
+
 function route(){
+  $('admBtn').hidden=!(ME&&ME.admin);
+  const it=INV();
+  if(it){ if(ME){location.hash='';return} return showInvite(it) }
   if(location.hash==='#cgu'){show('cgu');$('cgu').scrollTop=0;$('gate').hidden=true;return}
   if(!ME){show('login');$('lErr').textContent=KICK;$('gate').hidden=true;return}
   gate();
