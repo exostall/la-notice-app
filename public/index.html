@@ -138,6 +138,10 @@ body.veil .veilmsg{display:grid}
 #login input{height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:0 14px;font:inherit;font-size:16px;-webkit-user-select:text;user-select:text}
 #login .go2{height:50px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-fg);font-weight:700;font-size:15.5px}
 #login .go2:disabled{opacity:.5}
+#login .gbtn{height:50px;border-radius:12px;border:1px solid var(--line);background:#fff;color:#1f1f1f;font-weight:600;font-size:15.5px;display:flex;align-items:center;justify-content:center;gap:10px}
+#login .gbtn svg{width:20px;height:20px}
+#login .or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12.5px}
+#login .or::before,#login .or::after{content:"";flex:1;height:1px;background:var(--line)}
 #login .err{color:#b3261e;font-size:13.5px;min-height:18px}
 .who{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
 .who button{height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:12.5px;font-weight:600}
@@ -155,6 +159,11 @@ body.veil .veilmsg{display:grid}
   <form class="card2" id="loginForm">
     <h1>La Notice</h1>
     <p>Protocoles illustrés pour le cabinet. Accès sur invitation, un compte par praticien.</p>
+    <button class="gbtn" id="gGo" type="button">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+      Continuer avec Google
+    </button>
+    <div class="or"><span>ou avec un e-mail</span></div>
     <input id="lEmail" type="email" autocomplete="username" placeholder="Adresse e-mail" required>
     <input id="lPass" type="password" autocomplete="current-password" placeholder="Mot de passe" required>
     <div class="err" id="lErr" role="alert"></div>
@@ -1216,12 +1225,12 @@ addEventListener('pageshow',()=>veil(document.hidden));
 $('veilmsg').addEventListener('pointerdown',()=>{veil(false);try{window.focus()}catch(_){}});
 
 /* ---------- Comptes (Supabase) ---------- */
-const sb=window.supabase.createClient('https://aszdfmpwyhpcsokrwmog.supabase.co','sb_publishable_O85LeRosp83i52TAjaeeYg__2MfOGiJ',{auth:{persistSession:true,autoRefreshToken:true}});
+const sb=window.supabase.createClient('https://aszdfmpwyhpcsokrwmog.supabase.co','sb_publishable_O85LeRosp83i52TAjaeeYg__2MfOGiJ',{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}});
 function deviceId(){let d='';try{d=localStorage.getItem('notice-device')||''}catch(_){}
   if(!d){d=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now());try{localStorage.setItem('notice-device',d)}catch(_){}}return d}
 let ME=null, accepted=false, KICK='';
 const MSG={other_device:'Votre compte vient d’être ouvert sur un autre appareil. Un seul appareil peut être connecté à la fois.',
-  not_approved:'Ce compte n’est pas encore activé. Contactez La Notice.',not_signed_in:'Session expirée, reconnectez-vous.'};
+  not_approved:'Cette adresse n’est pas encore autorisée. Demandez votre accès à La Notice avec l’adresse e-mail de votre compte Google.',not_signed_in:'Session expirée, reconnectez-vous.'};
 function show(v){['login','home','fiche','cgu'].forEach(id=>$(id).hidden=id!==v)}
 async function kick(reason){KICK=MSG[reason]||'';ME=null;try{await sb.auth.signOut({scope:'local'})}catch(_){}location.hash='';route()}
 async function token(){const {data}=await sb.auth.getSession();return data.session&&data.session.access_token}
@@ -1240,10 +1249,25 @@ $('loginForm').addEventListener('submit',async e=>{
   try{await sb.auth.signOut({scope:'others'})}catch(_){}   /* ferme les autres sessions */
   $('lPass').value=''; $('lGo').disabled=false; KICK=''; await loadMe(c); route();
 });
+$('gGo').onclick=async()=>{
+  $('lErr').textContent='';
+  try{sessionStorage.setItem('notice-oauth','1')}catch(_){}
+  const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/',queryParams:{prompt:'select_account'}}});
+  if(error)$('lErr').textContent='Connexion Google indisponible pour le moment.';
+};
+/* au retour de Google : on enregistre cet appareil comme le seul actif */
+async function finishOAuth(){
+  let pending=false; try{pending=sessionStorage.getItem('notice-oauth')==='1';sessionStorage.removeItem('notice-oauth')}catch(_){}
+  if(!pending)return true;
+  const {data:c}=await sb.rpc('claim_device',{p_device:deviceId()});
+  if(!c||!c.ok){await kick((c&&c.reason)||'not_signed_in');return false}
+  try{await sb.auth.signOut({scope:'others'})}catch(_){}
+  await loadMe(c); return true;
+}
 async function loadMe(c){
   if(!c){const {data:u}=await sb.auth.getUser(); if(!u||!u.user){ME=null;return}
     const {data:p}=await sb.from('profiles').select('full_name,email,cgu_accepted_at,approved').eq('id',u.user.id).single();
-    if(!p||!p.approved){ME=null;return}
+    if(!p||!p.approved){KICK=MSG.not_approved;ME=null;try{await sb.auth.signOut({scope:'local'})}catch(_){}return}
     c={name:p.full_name,email:p.email,cgu:!!p.cgu_accepted_at}}
   ME=c; accepted=!!c.cgu; VIEWER=c.name+' · '+c.email; drawWatermark(); $('whoName').textContent=c.name;
 }
@@ -1277,7 +1301,11 @@ function route(){
   else {show('home');F=null}
 }
 addEventListener('hashchange',route);
-(async()=>{ if(await token())await loadMe(); route(); })();
+(async()=>{
+  if(await token()){ if(await finishOAuth()&&!ME)await loadMe(); }
+  if(location.search.includes('code=')||location.search.includes('error'))history.replaceState(null,'',location.pathname+location.hash);
+  route();
+})();
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}
 </script>
 </body>
