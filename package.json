@@ -1,1 +1,1 @@
-{ "name": "la-notice-app", "private": true, "engines": { "node": "20.x" } }
+{ "name": "la-notice-app", "private": true }
