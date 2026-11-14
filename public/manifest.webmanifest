@@ -4,6 +4,7 @@
   "description": "Protocoles illustrés pour le cabinet dentaire",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#EEF2F5",
   "theme_color": "#1D6FB5",
   "lang": "fr",
