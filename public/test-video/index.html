@@ -575,6 +575,7 @@ function placeBack(){
 
 /* ---------- affichage d'une image de la vidéo ---------- */
 async function seek(t){
+  for(let i=0;i<100&&!(P&&ready);i++){ if(i===5)$('vstat').textContent='Chargement du lecteur…'; await sleep(100) }
   if(!P)return;
   await new Promise(res=>{ seekWaiters.push(res); setTimeout(res,2500); P.seekTo(t).catch(()=>{}) });
   try{ await P.play(); await sleep(70); await P.pause() }catch(_){}   /* une image dure 1 s : 70 ms ne la quittent pas */
@@ -614,7 +615,7 @@ function win(d){ if(mode==='ov'){const k=Math.max(0,Math.min(OV.length-1,ow+d));
 STEPS.forEach(()=>$('dots').appendChild(document.createElement('i')));
 [...$('dots').children].forEach((d,i)=>{d.style.cursor='pointer';d.onclick=()=>go(i)});
 function openFiche(){
-  if(!ready)return; $('home').hidden=true; $('fiche').hidden=false;
+  $('home').hidden=true; $('fiche').hidden=false;
   
   mode='ov'; ow=0; requestAnimationFrame(()=>{layout(); showFrame(true)});
 }
