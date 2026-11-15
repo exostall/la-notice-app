@@ -46,6 +46,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 
 /* ---------- Fiche ---------- */
 #fiche{gap:8px}
+#fiche[data-white]{--paper:#FFFFFF}
 .top{display:flex;align-items:center;gap:10px;min-height:44px}
 .iconbtn{flex:none;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center}
 .iconbtn svg{width:20px;height:20px}
@@ -335,6 +336,7 @@ body.veil .veilmsg{display:grid}
 
 <script>
 /* Coordonnées des zones : repère de 1000 de large (le verso fait 1000 × 1414). */
+const WHITE_BG=new Set(['33']);   /* test : fond blanc au lieu du beige */
 const FICHES=[
  {
   "id": "33",
@@ -1093,6 +1095,7 @@ let F=null, idx=0, overview=true, why=false, first=true, ovY=0;
       b.querySelector('img').src='v/f'+f.id+'.webp';
       const l=b.querySelector('.lbl');l.textContent=f.title;const s=document.createElement('small');s.textContent=f.label;l.prepend(s);
       b.onclick=()=>{goFull();location.hash='fiche-'+f.id};
+      if(WHITE_BG.has(f.id)){const pc=b.querySelector('.pic');if(pc)pc.style.background='#fff'}
       sec.querySelector('.grid').appendChild(b);
     });
     $('groups').appendChild(sec);
@@ -1104,6 +1107,7 @@ const sheet=$('sheet'), stage=$('stage'), ovl=$('ovl');
 function el(tag,attrs){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e}
 function openFiche(f){
   F=f; idx=0; overview=true; why=false; first=true; ovY=0;
+  if(WHITE_BG.has(f.id))$('fiche').setAttribute('data-white','');else $('fiche').removeAttribute('data-white');
   const [W,H]=f.size;
   sheet.style.width=W+'px'; sheet.style.height=H+'px';
   const rb=tiled(f.recto); rb.id='rectoBox'; rb.style.paddingTop=(rb.dataset.ratio*100)+'%'; $('rectoBox').replaceWith(rb);
