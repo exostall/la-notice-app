@@ -160,10 +160,10 @@ body.veil .veilmsg{display:grid}
 #cgu .note{font-size:12.5px;color:var(--muted)}
 @media print{body *{display:none!important}body::after{content:"Impression désactivée : contenu protégé — La Notice";display:block;padding:40px;font:16px sans-serif}}
 
-#login,#invite{display:grid;place-items:center;overflow-y:auto}
-#login .card2,#invite .card2{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px 20px;display:flex;flex-direction:column;gap:12px}
-#login h1,#invite h1{margin:0;font-size:24px}
-#login p,#invite p{margin:0;color:var(--muted);font-size:13.5px}
+#login,#invite,#install{display:grid;place-items:center;overflow-y:auto}
+#login .card2,#invite .card2,#install .card2{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px 20px;display:flex;flex-direction:column;gap:12px}
+#login h1,#invite h1,#install h1{margin:0;font-size:24px}
+#login p,#invite p,#install p{margin:0;color:var(--muted);font-size:13.5px}
 #login input{height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:0 14px;font:inherit;font-size:16px;-webkit-user-select:text;user-select:text}
 #login .go2{height:50px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-fg);font-weight:700;font-size:15.5px}
 #login .go2:disabled{opacity:.5}
@@ -187,6 +187,12 @@ body.veil .veilmsg{display:grid}
 .adm .it{display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid var(--line);padding:8px 0;font-size:13.5px}
 .adm .it small{display:block;color:var(--muted);font-size:12px}
 .adm .cl{align-self:flex-end;height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:600}
+
+#install{overflow-y:auto}
+#install .go2{height:50px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-fg);font-weight:700;font-size:15.5px}
+#install ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.45}
+#install .out{align-self:flex-start;border:0;background:none;color:var(--muted);text-decoration:underline;font-size:13px;padding:4px 0}
+#install .ok{color:var(--fg);font-weight:600}
 </style>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#1D6FB5">
@@ -221,6 +227,17 @@ body.veil .veilmsg{display:grid}
     <button class="gbtn" id="invGo" type="button"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg> Continuer avec Google</button>
     <div class="err" id="invErr" role="alert"></div>
     <p><a href="#cgu">Conditions d'utilisation</a></p>
+  </div>
+</section>
+
+<section class="view" id="install" hidden aria-label="Installation de l'application">
+  <div class="card2">
+    <h1>La Notice</h1>
+    <p>Pour protéger le contenu, La Notice s’utilise uniquement depuis l’application installée sur votre téléphone ou votre tablette.</p>
+    <button class="go2" id="insGo" type="button" hidden>Installer l’application</button>
+    <ol id="insSteps"></ol>
+    <p class="ok" id="insDone" hidden>Application installée. Ouvrez l’icône La Notice sur votre écran d’accueil, puis connectez-vous avec Google.</p>
+    <button class="out" id="insOut" type="button">Se déconnecter</button>
   </div>
 </section>
 
@@ -1297,7 +1314,7 @@ function deviceId(){let d='';try{d=localStorage.getItem('notice-device')||''}cat
 let ME=null, accepted=false, KICK='';
 const MSG={other_device:'Votre compte vient d’être ouvert sur un autre appareil. Un seul appareil peut être connecté à la fois.',
   not_approved:'Cette adresse n’est pas encore autorisée. Demandez votre accès à La Notice avec l’adresse e-mail de votre compte Google.',not_signed_in:'Session expirée, reconnectez-vous.',invite_invalid:'Cette invitation n’est plus valable (déjà utilisée ou expirée). Demandez-en une nouvelle à La Notice.'};
-function show(v){['login','invite','home','fiche','cgu'].forEach(id=>$(id).hidden=id!==v)}
+function show(v){['login','invite','install','home','fiche','cgu'].forEach(id=>$(id).hidden=id!==v)}
 async function kick(reason){KICK=MSG[reason]||'';ME=null;try{await sb.auth.signOut({scope:'local'})}catch(_){}location.hash='';route()}
 async function token(){const {data}=await sb.auth.getSession();return data.session&&data.session.access_token}
 async function api(fiche,log){
@@ -1365,10 +1382,27 @@ setInterval(async()=>{ if(!ME||document.hidden)return; const id=F?F.id:FICHES[0]
 
 /* plein écran (hors application installée) */
 const de=document.documentElement, canFull=!!(de.requestFullscreen||de.webkitRequestFullscreen);
-const isApp=()=>matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
+const isApp=()=>matchMedia('(display-mode: fullscreen), (display-mode: standalone), (display-mode: minimal-ui)').matches||navigator.standalone===true;
 function goFull(){ if(!canFull||isApp()||document.fullscreenElement)return; try{(de.requestFullscreen||de.webkitRequestFullscreen).call(de,{navigationUI:'hide'})}catch(_){} }
 $('fsBtn').hidden=!canFull||isApp();
 $('fsBtn').onclick=()=>{ if(document.fullscreenElement)document.exitFullscreen(); else goFull() };
+
+/* installation obligatoire sur téléphone et tablette (l'ordinateur reste libre) */
+let DEFER=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();DEFER=e;if(!$('install').hidden)prepInstall()});
+addEventListener('appinstalled',()=>{DEFER=null;$('insGo').hidden=true;$('insSteps').hidden=true;$('insDone').hidden=false});
+const isTouch=()=>matchMedia('(hover:none) and (pointer:coarse)').matches;
+const needsInstall=()=>isTouch()&&!isApp()&&!(ME&&ME.admin);
+function prepInstall(){
+  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  $('insGo').hidden=!DEFER; $('insDone').hidden=true; $('insSteps').hidden=false;
+  const st=ios?['Appuyez sur le bouton Partager (le carré avec une flèche), en bas ou en haut de l’écran.','Choisissez « Sur l’écran d’accueil », puis « Ajouter ».','Ouvrez l’icône La Notice et reconnectez-vous avec Google.']
+    :DEFER?['Ou ouvrez le menu ⋮ du navigateur et choisissez « Installer l’application ».','Ouvrez ensuite l’icône La Notice et connectez-vous avec Google.']
+    :['Ouvrez le menu ⋮ du navigateur.','Choisissez « Installer l’application » (ou « Ajouter à l’écran d’accueil »).','Ouvrez l’icône La Notice et connectez-vous avec Google.'];
+  $('insSteps').innerHTML=''; st.forEach(t=>{const li=document.createElement('li');li.textContent=t;$('insSteps').append(li)});
+}
+$('insGo').onclick=async()=>{ if(!DEFER)return; DEFER.prompt(); try{await DEFER.userChoice}catch(_){} DEFER=null; $('insGo').hidden=true };
+$('insOut').onclick=async()=>{ME=null;try{await sb.auth.signOut({scope:'local'})}catch(_){}location.hash='';route()};
 
 /* Routage : #fiche-33 */
 /* invitation à usage unique : #invite-<jeton> */
@@ -1421,6 +1455,7 @@ function route(){
   if(it){ if(ME){location.hash='';return} return showInvite(it) }
   if(location.hash==='#cgu'){show('cgu');$('cgu').scrollTop=0;$('gate').hidden=true;return}
   if(!ME){show('login');$('lErr').textContent=KICK;$('gate').hidden=true;return}
+  if(needsInstall()){show('install');$('gate').hidden=true;prepInstall();return}
   gate();
   const m=location.hash.match(/^#fiche-(\w+)$/), f=m&&accepted&&FICHES.find(x=>x.id===m[1]);
   if(f){ if(!F||F.id!==f.id||$('fiche').hidden){show('home');openSecure(f)} }
