@@ -4,7 +4,7 @@
 <meta name="referrer" content="origin"><meta name="robots" content="noindex">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>La Notice · test Kinescope v4</title>
+<title>La Notice</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout : accueil = grille de vignettes dessinées ; fiche = scène plein écran (verso entier + caméra qui zoome sur une séquence), barre haute, barre basse. */
@@ -196,22 +196,22 @@ body.veil .veilmsg{display:grid}
 #install .out{align-self:flex-start;border:0;background:none;color:var(--muted);text-decoration:underline;font-size:13px;padding:4px 0}
 #install .ok{color:var(--fg);font-weight:600}
 
-#vclip{position:absolute;left:0;top:0;width:100%;height:100%;overflow:hidden;z-index:1;pointer-events:none}
-#pA,#pB,#pC{position:absolute;left:0;top:0;width:1920px;height:384px;border:0;transform-origin:0 0;pointer-events:none;background:#fff}
-#pA,#pB,#pC{z-index:3;opacity:.004}
-#veil{position:absolute;inset:0;z-index:4;background:#fff;opacity:0;pointer-events:none}
-.sheet svg{z-index:3}
-.ldg{position:absolute;inset:0;z-index:5;display:grid;place-items:center;background:var(--paper);font-family:var(--font-mono);font-size:12px;color:var(--muted);transition:opacity .35s ease}
-.ldg.off{opacity:0;pointer-events:none}
-#dbg{white-space:pre-wrap;max-width:96vw;position:fixed;left:8px;bottom:3px;z-index:9;font:10px var(--font-mono);color:var(--muted);pointer-events:none;opacity:.8}
+.vwrap{position:absolute;transform-origin:0 0;transition:opacity .14s ease;will-change:transform,opacity}
+.vwrap #kp,.vwrap #kp iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;pointer-events:none}
+.vwrap video{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;background:#fff;object-fit:fill}
+.vwrap svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#vstat{font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
 </style>
 </head>
 <body>
 
 <section class="view" id="home" aria-label="Accueil">
-  <div class="brand"><h1>La Notice</h1><div class="who"><span>test vidéo protégée</span></div></div>
+  <div class="brand">
+    <h1>La Notice</h1>
+    <div class="who"><span id="vstat">Chargement de la vidéo…</span></div>
+  </div>
   <div id="groups"><div class="group"><h2>Test vidéo · Restaurations partielles indirectes</h2><div class="grid"><button type="button" class="card" id="card33"><div class="pic" style="background:#fff"><img alt="" src="v/f33.webp"></div><div class="lbl"><small>Fiche 33</small>Préparation d'un onlay</div></button></div></div></div>
-  <div class="foot"><span>© La Notice · Léa Massé &amp; Florian Saysset</span></div>
+  <div class="foot"><span>© La Notice · Léa Massé &amp; Florian Saysset · test de lecture vidéo protégée</span></div>
 </section>
 <section class="view" id="fiche" hidden data-white aria-label="Fiche">
   <div class="top">
@@ -219,19 +219,14 @@ body.veil .veilmsg{display:grid}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <div class="cap"><span class="sec" id="sec"></span><span class="ttl" id="ttl"></span></div>
-    <button class="iconbtn" id="fsBtn" type="button" aria-label="Plein écran" title="Plein écran" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
     <button class="pill" id="ovBtn" type="button" aria-pressed="false">Vue d'ensemble</button>
     <button class="pill" id="whyBtn" type="button" aria-pressed="false">Le pourquoi</button>
   </div>
   <div class="stage" id="stage">
-    <div class="sheet" id="sheet">
-      <div id="vclip"><div id="pA"></div><div id="pB"></div><div id="pC"></div></div>
-      <svg id="ovl" aria-hidden="false"></svg>
-    </div>
+    <div class="vwrap" id="vwrap"><div id="kp"></div><svg id="ovl" aria-hidden="true"></svg></div>
     <button class="backov" id="backov" type="button" aria-label="Revenir à la vue d'ensemble" title="Vue d'ensemble">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
     </button>
-    <div class="ldg" id="ldg" hidden>Chargement de la fiche…</div>
     <div class="zoom" aria-label="Zoom">
       <button type="button" id="zIn" aria-label="Agrandir">+</button>
       <button type="button" id="zOut" aria-label="Réduire">−</button>
@@ -248,20 +243,275 @@ body.veil .veilmsg{display:grid}
   <p class="hint" id="hint"></p>
 </section>
 <div class="wm" id="wm" aria-hidden="true"></div>
-<div id="dbg"></div>
 <script>
 const $=id=>document.getElementById(id);
-const NS='http://www.w3.org/2000/svg';
-const F={"label": "Fiche 33", "title": "Préparation d'un onlay", "size": [1000, 1414.05], "steps": [{"r": [17.14, 34.04, 431.19, 245.59], "t": "Occlusion", "sec": "Préparation d'un onlay"}, {"r": [430.22, 16.16, 1000.0, 287.95], "t": "Dépose et éviction carieuse", "sec": "Préparation d'un onlay"}, {"r": [11.51, 250.98, 1000.0, 564.89], "t": "Dentine infectée : révéler et éliminer", "sec": "Préparation d'un onlay"}, {"r": [0.0, 538.93, 983.1, 831.54], "t": "1 · Parois résiduelles ≥ 2 mm", "sec": "Impératifs de préparation"}, {"r": [0.0, 815.62, 1000.0, 1016.41], "t": "2 · Réduction tissulaire selon le matériau", "sec": "Impératifs de préparation"}, {"r": [16.41, 1016.41, 211.56, 1186.58], "t": "3 · Angles internes arrondis", "sec": "Impératifs de préparation"}, {"r": [218.9, 988.49, 566.6, 1188.54], "t": "4 · Angles cavo-superficiels nets", "sec": "Impératifs de préparation"}, {"r": [559.5, 922.87, 783.3, 1198.82], "t": "5 · Pas d'impact occlusal au niveau du joint", "sec": "Impératifs de préparation"}, {"r": [786.97, 999.27, 973.31, 1379.53], "t": "6 · Dépouille marquée", "sec": "Impératifs de préparation"}, {"r": [0.0, 1196.13, 1000.0, 1403.28], "t": "7 · Limite(s) de finition et point(s) de contact", "sec": "Impératifs de préparation"}]};
-const M={"W": 1920, "H": 384, "frames": [{"kind": "ov", "lvl": 0, "s": 0.8, "ux": 0, "uy": 0.0, "ox": 0, "oy": 0, "cov": [0, 0.0, 1000, 480.0], "slot": 0}, {"kind": "ov", "lvl": 0, "s": 0.8, "ux": 0, "uy": 467.5, "ox": 0, "oy": 0, "cov": [0, 467.5, 1000, 947.5], "slot": 1}, {"kind": "ov", "lvl": 0, "s": 0.8, "ux": 0, "uy": 933.75, "ox": 0, "oy": 0, "cov": [0, 933.75, 1000, 1413.75], "slot": 2}, {"kind": "ov", "lvl": 1, "s": 1.3, "ux": 0, "uy": 0.0, "ox": 0, "oy": 0, "cov": [0, 0.0, 1000, 295.38461538461536], "slot": 3}, {"kind": "ov", "lvl": 1, "s": 1.3, "ux": 0, "uy": 223.84615384615384, "ox": 0, "oy": 0, "cov": [0, 223.84615384615384, 1000, 519.2307692307692], "slot": 4}, {"kind": "ov", "lvl": 1, "s": 1.3, "ux": 0, "uy": 447.6923076923077, "ox": 0, "oy": 0, "cov": [0, 447.6923076923077, 1000, 743.0769230769231], "slot": 5}, {"kind": "ov", "lvl": 1, "s": 1.3, "ux": 0, "uy": 670.7692307692307, "ox": 0, "oy": 0, "cov": [0, 670.7692307692307, 1000, 966.1538461538461], "slot": 6}, {"kind": "ov", "lvl": 1, "s": 1.3, "ux": 0, "uy": 894.6153846153846, "ox": 0, "oy": 0, "cov": [0, 894.6153846153846, 1000, 1190.0], "slot": 7}, {"kind": "ov", "lvl": 1, "s": 1.3, "ux": 0, "uy": 1118.4615384615383, "ox": 0, "oy": 0, "cov": [0, 1118.4615384615383, 1000, 1413.8461538461538], "slot": 8}, {"kind": "ov", "lvl": 2, "s": 1.9, "ux": 0, "uy": 0.0, "ox": 0, "oy": 0, "cov": [0, 0.0, 1000, 202.10526315789474], "slot": 9}, {"kind": "ov", "lvl": 2, "s": 1.9, "ux": 0, "uy": 151.57894736842107, "ox": 0, "oy": 0, "cov": [0, 151.57894736842107, 1000, 353.6842105263158], "slot": 10}, {"kind": "ov", "lvl": 2, "s": 1.9, "ux": 0, "uy": 303.15789473684214, "ox": 0, "oy": 0, "cov": [0, 303.15789473684214, 1000, 505.2631578947369], "slot": 11}, {"kind": "ov", "lvl": 2, "s": 1.9, "ux": 0, "uy": 454.7368421052632, "ox": 0, "oy": 0, "cov": [0, 454.7368421052632, 1000, 656.8421052631579], "slot": 12}, {"kind": "ov", "lvl": 2, "s": 1.9, "ux": 0, "uy": 606.3157894736843, "ox": 0, "oy": 0, "cov": [0, 606.3157894736843, 1000, 808.421052631579], "slot": 13}, {"kind": "ov", "lvl": 2, "s": 1.9, "ux": 0, "uy": 757.3684210526316, "ox": 0, "oy": 0, "cov": [0, 757.3684210526316, 1000, 959.4736842105264], "slot": 14}, {"kind": "ov", "lvl": 2, "s": 1.9, "ux": 0, "uy": 908.9473684210527, "ox": 0, "oy": 0, "cov": [0, 908.9473684210527, 1000, 1111.0526315789475], "slot": 15}, {"kind": "ov", "lvl": 2, "s": 1.9, "ux": 0, "uy": 1060.5263157894738, "ox": 0, "oy": 0, "cov": [0, 1060.5263157894738, 1000, 1262.6315789473686], "slot": 16}, {"kind": "ov", "lvl": 2, "s": 1.9, "ux": 0, "uy": 1212.1052631578948, "ox": 0, "oy": 0, "cov": [0, 1212.1052631578948, 1000, 1414.05], "slot": 17}, {"kind": "rec", "lvl": 0, "s": 0.8, "ux": 0, "uy": 0.0, "ox": 0, "oy": 0, "cov": [0, 0.0, 1000, 480.0], "slot": 18}, {"kind": "rec", "lvl": 0, "s": 0.8, "ux": 0, "uy": 467.5, "ox": 0, "oy": 0, "cov": [0, 467.5, 1000, 947.5], "slot": 19}, {"kind": "rec", "lvl": 0, "s": 0.8, "ux": 0, "uy": 933.75, "ox": 0, "oy": 0, "cov": [0, 933.75, 1000, 1413.75], "slot": 20}, {"kind": "rec", "lvl": 1, "s": 1.3, "ux": 0, "uy": 0.0, "ox": 0, "oy": 0, "cov": [0, 0.0, 1000, 295.38461538461536], "slot": 21}, {"kind": "rec", "lvl": 1, "s": 1.3, "ux": 0, "uy": 223.84615384615384, "ox": 0, "oy": 0, "cov": [0, 223.84615384615384, 1000, 519.2307692307692], "slot": 22}, {"kind": "rec", "lvl": 1, "s": 1.3, "ux": 0, "uy": 447.6923076923077, "ox": 0, "oy": 0, "cov": [0, 447.6923076923077, 1000, 743.0769230769231], "slot": 23}, {"kind": "rec", "lvl": 1, "s": 1.3, "ux": 0, "uy": 670.7692307692307, "ox": 0, "oy": 0, "cov": [0, 670.7692307692307, 1000, 966.1538461538461], "slot": 24}, {"kind": "rec", "lvl": 1, "s": 1.3, "ux": 0, "uy": 894.6153846153846, "ox": 0, "oy": 0, "cov": [0, 894.6153846153846, 1000, 1190.0], "slot": 25}, {"kind": "rec", "lvl": 1, "s": 1.3, "ux": 0, "uy": 1118.4615384615383, "ox": 0, "oy": 0, "cov": [0, 1118.4615384615383, 1000, 1413.8461538461538], "slot": 26}, {"kind": "rec", "lvl": 2, "s": 1.9, "ux": 0, "uy": 0.0, "ox": 0, "oy": 0, "cov": [0, 0.0, 1000, 202.10526315789474], "slot": 27}, {"kind": "rec", "lvl": 2, "s": 1.9, "ux": 0, "uy": 151.57894736842107, "ox": 0, "oy": 0, "cov": [0, 151.57894736842107, 1000, 353.6842105263158], "slot": 28}, {"kind": "rec", "lvl": 2, "s": 1.9, "ux": 0, "uy": 303.15789473684214, "ox": 0, "oy": 0, "cov": [0, 303.15789473684214, 1000, 505.2631578947369], "slot": 29}, {"kind": "rec", "lvl": 2, "s": 1.9, "ux": 0, "uy": 454.7368421052632, "ox": 0, "oy": 0, "cov": [0, 454.7368421052632, 1000, 656.8421052631579], "slot": 30}, {"kind": "rec", "lvl": 2, "s": 1.9, "ux": 0, "uy": 606.3157894736843, "ox": 0, "oy": 0, "cov": [0, 606.3157894736843, 1000, 808.421052631579], "slot": 31}, {"kind": "rec", "lvl": 2, "s": 1.9, "ux": 0, "uy": 757.3684210526316, "ox": 0, "oy": 0, "cov": [0, 757.3684210526316, 1000, 959.4736842105264], "slot": 32}, {"kind": "rec", "lvl": 2, "s": 1.9, "ux": 0, "uy": 908.9473684210527, "ox": 0, "oy": 0, "cov": [0, 908.9473684210527, 1000, 1111.0526315789475], "slot": 33}, {"kind": "rec", "lvl": 2, "s": 1.9, "ux": 0, "uy": 1060.5263157894738, "ox": 0, "oy": 0, "cov": [0, 1060.5263157894738, 1000, 1262.6315789473686], "slot": 34}, {"kind": "rec", "lvl": 2, "s": 1.9, "ux": 0, "uy": 1212.1052631578948, "ox": 0, "oy": 0, "cov": [0, 1212.1052631578948, 1000, 1414.05], "slot": 35}, {"kind": "step", "lvl": 9, "step": 0, "s": 1.6583891168214209, "ux": 17.14, "uy": 34.04, "ox": 616.6719930900454, "oy": 16.583891168214194, "cov": [-354.71000000000004, 24.040000000000006, 803.04, 255.59000000000003], "slot": 36}, {"kind": "step", "lvl": 9, "step": 1, "s": 1.3160149422529903, "ux": 430.22, "uy": 16.16, "ox": 585.0805031015457, "oy": 13.160149422529912, "cov": [-14.364999999999952, 6.159999999999993, 1444.5849999999998, 297.94999999999993], "slot": 37}, {"kind": "step", "lvl": 9, "step": 2, "s": 1.1500104818663712, "ux": 11.51, "uy": 250.98, "ox": 391.6130693899554, "oy": 11.500104818663715, "cov": [-329.02000000000004, 240.98, 1340.53, 574.89], "slot": 38}, {"kind": "step", "lvl": 9, "step": 3, "s": 1.228367614599661, "ux": 0.0, "uy": 538.93, "ox": 356.19589904353666, "oy": 12.283676145996594, "cov": [-289.97499999999997, 528.93, 1273.075, 841.54], "slot": 39}, {"kind": "step", "lvl": 9, "step": 4, "s": 1.7392092033153679, "ux": 0.0, "uy": 815.62, "ox": 90.39539834231607, "oy": 17.39209203315366, "cov": [-51.9749999999999, 805.62, 1051.975, 1026.4099999999999], "slot": 40}, {"kind": "step", "lvl": 9, "step": 5, "s": 2.019245937845086, "ux": 16.41, "uy": 1016.41, "ox": 762.9720776147657, "oy": 20.192459378450877, "cov": [-361.4399999999999, 1006.41, 589.4100000000001, 1196.58], "slot": 41}, {"kind": "step", "lvl": 9, "step": 6, "s": 1.7450579413769602, "ux": 218.9, "uy": 988.49, "ox": 656.6216768916154, "oy": 17.45057941376959, "cov": [-157.3749999999998, 978.49, 942.875, 1198.54], "slot": 42}, {"kind": "step", "lvl": 9, "step": 7, "s": 1.2975164723770911, "ux": 559.5, "uy": 922.87, "ox": 814.8079067410035, "oy": 12.975164723770888, "cov": [-68.4749999999998, 912.87, 1411.2749999999996, 1208.82], "slot": 43}, {"kind": "step", "lvl": 9, "step": 8, "s": 0.9593764053365312, "ux": 786.97, "uy": 999.27, "ox": 870.6149003147955, "oy": 9.593764053365334, "cov": [-120.5100000000001, 989.27, 1880.79, 1389.53], "slot": 44}, {"kind": "step", "lvl": 9, "step": 9, "s": 1.690512876953556, "ux": 0.0, "uy": 1196.13, "ox": 114.74356152322196, "oy": 16.905128769535565, "cov": [-67.87499999999962, 1186.13, 1067.8749999999998, 1413.28], "slot": 45}, {"kind": "dup", "lvl": 9, "s": 1, "ux": 0, "uy": 0, "ox": 0, "oy": 0, "cov": [0, 0, 0, 0], "slot": 46}]}; const FR=M.frames;
-const SLOT_FIRST=0, SLOT_STEP=t=>FR.findIndex(f=>f.kind==='step'&&f.step===t);
-const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-/* identifiant Kinescope de la vidéo : ?v=<lien ou identifiant> ou valeur par défaut */
-const VID=(()=>{let v=new URLSearchParams(location.search).get('v')||'kFPPqNyjBGc47EScy9jv4B';v=v.trim().replace(/[?#].*$/,'').split('/').filter(Boolean).pop()||'';return v})();
-const KURL='https://kinescope.io/'+VID;
-const dbgEl=$('dbg'); const dbg=t=>{dbgEl.textContent=t};
+const M={
+ "W": 2400,
+ "H": 1080,
+ "frames": [
+  {
+   "kind": "ov",
+   "k": 2.4,
+   "ux": 0,
+   "uy": 0.0,
+   "ox": 0,
+   "oy": 0,
+   "n": 0
+  },
+  {
+   "kind": "ov",
+   "k": 2.4,
+   "ux": 0,
+   "uy": 321.25,
+   "ox": 0,
+   "oy": 0,
+   "n": 1
+  },
+  {
+   "kind": "ov",
+   "k": 2.4,
+   "ux": 0,
+   "uy": 642.9166666666667,
+   "ox": 0,
+   "oy": 0,
+   "n": 2
+  },
+  {
+   "kind": "ov",
+   "k": 2.4,
+   "ux": 0,
+   "uy": 964.1666666666667,
+   "ox": 0,
+   "oy": 0,
+   "n": 3
+  },
+  {
+   "kind": "step",
+   "step": 0,
+   "k": 4.859371307019617,
+   "ux": 17.14,
+   "uy": 34.04,
+   "ox": 193.98865516426372,
+   "oy": 26.0,
+   "r": [
+    17.14,
+    34.04,
+    431.19,
+    245.59
+   ],
+   "t": "Occlusion",
+   "sec": "Préparation d'un onlay",
+   "n": 4
+  },
+  {
+   "kind": "step",
+   "step": 1,
+   "k": 3.782331947459436,
+   "ux": 430.22,
+   "uy": 16.16,
+   "ox": 122.45145148828146,
+   "oy": 26.0,
+   "r": [
+    430.22,
+    16.16,
+    1000.0,
+    287.95
+   ],
+   "t": "Dépose et éviction carieuse",
+   "sec": "Préparation d'un onlay",
+   "n": 5
+  },
+  {
+   "kind": "step",
+   "step": 2,
+   "k": 2.3753401653026334,
+   "ux": 11.51,
+   "uy": 250.98,
+   "ox": 26.0,
+   "oy": 167.17848435492522,
+   "r": [
+    11.51,
+    250.98,
+    1000.0,
+    564.89
+   ],
+   "t": "Dentine infectée : révéler et éliminer",
+   "sec": "Préparation d'un onlay",
+   "n": 6
+  },
+  {
+   "kind": "step",
+   "step": 3,
+   "k": 2.388363340453667,
+   "ux": 0.0,
+   "uy": 538.93,
+   "ox": 26.0,
+   "oy": 190.57050147492623,
+   "r": [
+    0.0,
+    538.93,
+    983.1,
+    831.54
+   ],
+   "t": "1 · Parois résiduelles ≥ 2 mm",
+   "sec": "Impératifs de préparation",
+   "n": 7
+  },
+  {
+   "kind": "step",
+   "step": 4,
+   "k": 2.348,
+   "ux": 0.0,
+   "uy": 815.62,
+   "ox": 26.0,
+   "oy": 304.27254000000005,
+   "r": [
+    0.0,
+    815.62,
+    1000.0,
+    1016.41
+   ],
+   "t": "2 · Réduction tissulaire selon le matériau",
+   "sec": "Impératifs de préparation",
+   "n": 8
+  },
+  {
+   "kind": "step",
+   "step": 5,
+   "k": 5.0,
+   "ux": 16.41,
+   "uy": 1016.41,
+   "ox": 712.125,
+   "oy": 114.5750000000001,
+   "r": [
+    16.41,
+    1016.41,
+    211.56,
+    1186.58
+   ],
+   "t": "3 · Angles internes arrondis",
+   "sec": "Impératifs de préparation",
+   "n": 9
+  },
+  {
+   "kind": "step",
+   "step": 6,
+   "k": 5.0,
+   "ux": 218.9,
+   "uy": 988.49,
+   "ox": 330.7499999999999,
+   "oy": 39.875000000000114,
+   "r": [
+    218.9,
+    988.49,
+    566.6,
+    1188.54
+   ],
+   "t": "4 · Angles cavo-superficiels nets",
+   "sec": "Impératifs de préparation",
+   "n": 10
+  },
+  {
+   "kind": "step",
+   "step": 7,
+   "k": 3.7253125566225775,
+   "ux": 559.5,
+   "uy": 922.87,
+   "ox": 783.1375249139337,
+   "oy": 26.0,
+   "r": [
+    559.5,
+    922.87,
+    783.3,
+    1198.82
+   ],
+   "t": "5 · Pas d'impact occlusal au niveau du joint",
+   "sec": "Impératifs de préparation",
+   "n": 11
+  },
+  {
+   "kind": "step",
+   "step": 8,
+   "k": 2.703413453952559,
+   "ux": 786.97,
+   "uy": 999.27,
+   "ox": 948.1229684952402,
+   "oy": 26.0,
+   "r": [
+    786.97,
+    999.27,
+    973.31,
+    1379.53
+   ],
+   "t": "6 · Dépouille marquée",
+   "sec": "Impératifs de préparation",
+   "n": 12
+  },
+  {
+   "kind": "step",
+   "step": 9,
+   "k": 2.348,
+   "ux": 0.0,
+   "uy": 1196.13,
+   "ox": 26.0,
+   "oy": 296.8059000000002,
+   "r": [
+    0.0,
+    1196.13,
+    1000.0,
+    1403.28
+   ],
+   "t": "7 · Limite(s) de finition et point(s) de contact",
+   "sec": "Impératifs de préparation",
+   "n": 13
+  },
+  {
+   "kind": "why",
+   "k": 1,
+   "ux": 0,
+   "uy": 0,
+   "ox": 0,
+   "oy": 0,
+   "n": 14
+  },
+  {
+   "kind": "why",
+   "k": 1,
+   "ux": 0,
+   "uy": 771,
+   "ox": 0,
+   "oy": 0,
+   "n": 15
+  },
+  {
+   "kind": "why",
+   "k": 1,
+   "ux": 0,
+   "uy": 1543,
+   "ox": 0,
+   "oy": 0,
+   "n": 16
+  },
+  {
+   "kind": "why",
+   "k": 1,
+   "ux": 0,
+   "uy": 2314,
+   "ox": 0,
+   "oy": 0,
+   "n": 17
+  }
+ ]
+};
+const FW=M.W, FH=M.H;
+const STEPS=M.frames.filter(f=>f.kind==='step'), OV=M.frames.filter(f=>f.kind==='ov'), WH=M.frames.filter(f=>f.kind==='why');
+const LABEL='Fiche 33', TITLE="Préparation d'un onlay";
+let mode='ov', idx=0, ow=0, rw=0, tok=0, ready=false, z={k:1,x:0,y:0}, base={s:1,left:0,top:0,w:0,h:0};
+const stage=$('stage'), vw=$('vwrap'), ovl=$('ovl');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const raf2=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
 
-/* ---------- filigrane et protections (identiques à l'app) ---------- */
+/* filigrane nominatif (identique à l'app) */
 let VIEWER='Luc Massé · test vidéo';
 function stamp(){const d=new Date(),p=n=>String(n).padStart(2,'0');return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes())}
 function drawWatermark(){
@@ -271,294 +521,171 @@ function drawWatermark(){
   $('wm').style.backgroundImage='url("data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)+'")';
 }
 drawWatermark(); setInterval(drawWatermark,60000);
-['contextmenu','dragstart','selectstart','copy','cut'].forEach(t=>addEventListener(t,e=>e.preventDefault(),true));
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+['contextmenu','dragstart','selectstart'].forEach(t=>addEventListener(t,e=>e.preventDefault(),true));
 
-/* ---------- lecteurs Kinescope : deux lecteurs superposés (double tampon) ---------- */
-/* Image n de la vidéo = seconde n. 0 = vue d'ensemble, 1..10 = séquences, 11 = recto. */
-let factory=null; const apiReady=new Promise(res=>{window.onKinescopeIframeAPIReady=f=>{factory=f;res(f)}});
-{const s=document.createElement('script');s.src='https://player.kinescope.io/latest/iframe.player.js';s.async=true;s.onerror=()=>dbg('Script Kinescope bloqué');document.head.appendChild(s)}
-const PL=[]; let vis=0, curFrame=-1, swapTok=0, busyUntil=0, rvTimer=null, lastDir=1, playersP=null;
-function seekP(pl,t){return new Promise(res=>{let d=false;const fin=()=>{if(!d){d=true;res()}};pl.w.push(fin);setTimeout(fin,3500);pl.p.seekTo(t).catch(fin)})}
-function place(pl,frame){const f=FR[frame]; if(!f||!pl.el)return;
-  pl.el.style.width=M.W+'px'; pl.el.style.height=M.H+'px';
-  pl.el.style.transform='translate('+(f.ux-f.ox/f.s)+'px,'+(f.uy-f.oy/f.s)+'px) scale('+(1/f.s)+')'}
-function prepare(pl,frame){
-  const tok=++pl.tok; pl.frame=frame; pl.ok=false;
-  pl.chain=pl.chain.then(async()=>{
-    if(pl.tok!==tok)return; const t0=performance.now(); place(pl,frame);
-    await pl.ready; await seekP(pl,frame+0.4);
-    try{await pl.p.play();await sleep(60);await pl.p.pause()}catch(_){}   /* une image dure 1 s : 60 ms ne la quittent pas */
-    await sleep(160);   /* laisse à l'image le temps d'être réellement peinte avant tout affichage */
-    if(pl.tok===tok){pl.ok=true;pl.ms=Math.round(performance.now()-t0);status()}
-  });
-  return pl.chain;
-}
-function status(){dbg('A:'+(PL[0]?fl(PL[0]):'-')+'  B:'+(PL[1]?fl(PL[1]):'-')+'  C:'+(PL[2]?fl(PL[2]):'-')+' · '+mode+' · prép. '+Math.max(...PL.map(x=>x.ms||0),0)+' ms'+(qual?'\n'+qual:'')+(evk?'\n'+evk:''))}
-const fl=p=>(p.frame<0?'–':FR[p.frame].kind+(FR[p.frame].kind==='step'?FR[p.frame].step+1:FR[p.frame].lvl)+'@'+(+FR[p.frame].s).toFixed(1))+(p.ok?' ✓':' …');
-let qual='', evk='';
-async function makePlayer(id,z){
-  const f=await apiReady;
-  const pl={id,p:null,el:null,w:[],frame:-1,ok:false,tok:0,chain:Promise.resolve(),ms:0};
-  const p=await f.create(id,{url:KURL,size:{width:'100%',height:'100%'},
+/* lecteur Kinescope (iframe cachée, contrôles masqués, pilotée par l'API) */
+const KURL='https://kinescope.io/491PxyQaPDh633uek7VuMA';
+let P=null, seekWaiters=[];
+window.onKinescopeIframeAPIReady=function(f){
+  f.create('kp',{url:KURL,size:{width:'100%',height:'100%'},
     behavior:{autoPlay:false,muted:true,preload:'auto',keyboard:false,localStorage:false,playsInline:true},
-    ui:{controls:false,mainPlayButton:false}});
-  pl.p=p; pl.el=document.getElementById(id); pl.el.style.zIndex=z;
-  p.on(p.Events.Seeked,()=>{const w=pl.w;pl.w=[];w.forEach(fn=>fn())});
-  p.on(p.Events.Error,e=>dbg('Erreur lecteur '+id+' : '+JSON.stringify((e&&e.data)||e)));
-  const E=p.Events||{}; evk=Object.keys(E).join(',');
-  pl.ready=new Promise(res=>{let d=false;const f=()=>{if(!d){d=true;res()}};
-    ['Ready','Loaded','DurationChange','LoadedMetadata'].forEach(k=>{if(E[k]){try{p.once(E[k],f)}catch(_){}}});
-    setTimeout(f,5000)});
-  pl.ready.then(async()=>{try{
-    const q=await p.getVideoQualityList(); const num=x=>parseInt(String(x&&x.id!=null?x.id:x).replace(/\D/g,''))||0;
-    const best=(q||[]).slice().sort((a,b)=>num(b)-num(a))[0];
-    if(best!=null)await p.setVideoQuality(best);
-    await sleep(2500); const now=await p.getVideoQuality();
-    qual='liste '+JSON.stringify(q)+' · choisie '+JSON.stringify(best)+' · actuelle '+JSON.stringify(now); status()
-  }catch(e){qual='qualité ? '+e}});
-  return pl;
-}
-function ensurePlayers(){
-  if(playersP)return playersP;
-  playersP=(async()=>{
-    const ids=['pA','pB','pC'];
-    const arr=await Promise.all(ids.map((id,i)=>makePlayer(id,3)));
-    arr.forEach((pl,i)=>{PL.push(pl); pl.el.style.opacity='.004'});
-    vis=0; mode='none'; shownKey='';
-    await setTarget(target());
-    $('ldg').classList.add('off'); setTimeout(()=>$('ldg').hidden=true,400);
-  })();
-  return playersP;
-}
-function teardown(){
-  PL.forEach(pl=>{try{pl.p.destroy()}catch(_){}}); PL.length=0; playersP=null; mode='none'; shownKey=''; swapTok++;
-  $('vclip').innerHTML='<div id="pA"></div><div id="pB"></div><div id="pC"></div>'; veil.style.opacity=0}
-function predict(){const f=FR[PL[vis]&&PL[vis].frame]; if(!f||f.kind!=='step')return SLOT_STEP(Math.max(0,Math.min(F.steps.length-1,idx)));
-  const n=F.steps.length, t=f.step+(lastDir>=0?1:-1); return SLOT_STEP(t>=0&&t<n?t:f.step-(lastDir>=0?1:-1))}
-function preloadNext(){if(mode!=='single')return; const sp=PL[1-vis]; if(!sp)return; const p=predict(); if(sp.frame!==p)prepare(sp,p)}
-let mode='none', shownKey='';
-const veil=document.createElement('div'); veil.id='veil'; document.getElementById('stage').appendChild(veil);
-const keyOf=t=>t.stack?'S'+t.stack:'F'+t.frame;
-async function veilIn(){if(reduce)return; veil.style.transition='opacity .14s ease';veil.style.opacity=1;await sleep(150)}
-function veilOut(){if(reduce){veil.style.opacity=0;return} veil.style.transition='opacity .28s ease';veil.style.opacity=0}
-function reveal(on){PL.forEach((pl,i)=>{pl.el.style.transition='none'; if(on.includes(i)){pl.el.style.opacity=1;pl.el.style.zIndex=2}else{pl.el.style.opacity='.004';pl.el.style.zIndex=3}})}
-async function setTarget(t){
-  if(!PL.length)return;
-  const key=keyOf(t), my=++swapTok;
-  if(key===shownKey){veilOut();return}
-  const w=busyUntil-performance.now(); if(w>0)await sleep(w+20);
-  if(my!==swapTok)return;
-  if(t.stack){
-    const fr=FR.map((f,i)=>f.kind===t.stack&&f.lvl===0?i:-1).filter(i=>i>=0);
-    await veilIn(); if(my!==swapTok)return;
-    await Promise.all(PL.map((pl,i)=>prepare(pl,fr[i]))); if(my!==swapTok)return;
-    reveal([0,1,2]); mode='stack'; shownKey=key; busyUntil=performance.now()+300;
-    await sleep(140); if(my!==swapTok)return; veilOut(); status(); return;
-  }
-  const cur=PL[vis];
-  if(mode==='single'&&cur.frame===t.frame&&cur.ok){shownKey=key;veilOut();return}
-  const sameKind=mode==='single'&&cur.frame>=0&&FR[cur.frame].kind===FR[t.frame].kind&&FR[t.frame].kind!=='step';
-  if(mode==='single'){
-    const sp=PL[1-vis];
-    await (sp.frame===t.frame?sp.chain:prepare(sp,t.frame)); if(my!==swapTok||sp.frame!==t.frame)return;
-    if(!sameKind){await veilIn(); if(my!==swapTok)return}
-    const inc=1-vis; vis=inc; reveal([inc]);
-  } else {
-    await veilIn(); if(my!==swapTok)return;
-    await prepare(PL[0],t.frame); if(my!==swapTok)return;
-    vis=0; reveal([0]); mode='single';
-  }
-  shownKey=key; busyUntil=performance.now()+(sameKind?60:300);
-  if(!sameKind){await sleep(140); if(my!==swapTok)return; veilOut()}
-  setTimeout(()=>{if(my===swapTok){preloadNext();status()}},sameKind?60:300);
-}
-/* image la plus nette qui couvre entièrement la zone visible (feuille composée ou recto) ; sinon la page entière */
-function pickLevel(kind,c){
-  const [W,H]=stageWH(), [SW,SH]=F.size, m=2;
-  const x0=Math.max(0,c.cx-W/2/c.k)+m, x1=Math.min(SW,c.cx+W/2/c.k)-m, y0=Math.max(0,c.cy-H/2/c.k)+m, y1=Math.min(SH,c.cy+H/2/c.k)-m;
-  let best=-1;
-  FR.forEach((f,i)=>{if(f.kind!==kind||f.lvl<1)return; const v=f.cov; if(v[0]<=x0&&v[2]>=x1&&v[1]<=y0&&v[3]>=y1&&(best<0||f.s>FR[best].s))best=i});
-  return best}
-function target(){
-  if(why||overview){const kind=why?'rec':'ov', b=pickLevel(kind,camNow()); return b>=0?{frame:b}:{stack:kind}}
-  return {frame:SLOT_STEP(idx)}}
-let rfTimer=null;
-function refreshFrame(){ if($('fiche').hidden||!PL.length)return; setTarget(target()) }
-function refreshLater(){clearTimeout(rfTimer); rfTimer=setTimeout(()=>refreshFrame(true),240)}
+    ui:{controls:false,mainPlayButton:false}
+  }).then(p=>{
+    P=p;
+    p.on(p.Events.Seeked,()=>{const w=seekWaiters;seekWaiters=[];w.forEach(r=>r())});
+    p.on(p.Events.Error,e=>{$('vstat').textContent='Erreur lecteur : '+JSON.stringify(e&&e.data||e)});
+    p.once(p.Events.Loaded,()=>{ready=true;$('vstat').textContent='Lecteur Kinescope prêt'});
+    setTimeout(()=>{ if(!ready) $('vstat').textContent='Lecteur en attente…' },4000);
+  }).catch(e=>{$('vstat').textContent='Lecteur indisponible : '+e});
+};
+{const s=document.createElement('script');s.src='https://player.kinescope.io/latest/iframe.player.js';s.async=true;s.onerror=()=>{$('vstat').textContent='Script Kinescope bloqué'};document.head.appendChild(s)}
 
-/* ---------- Fiche (reprise de l'appli) ---------- */
-const sheet=$('sheet'), stage=$('stage'), ovl=$('ovl');
-let idx=0, overview=true, why=false, first=true, ovY=0, wY=0, free=null;
-function el(tag,attrs){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e}
-function openFiche(){
-  idx=0; overview=true; why=false; first=true; ovY=0; wY=0;
-  const [W,H]=F.size; sheet.style.width=W+'px'; sheet.style.height=H+'px';
-  ovl.setAttribute('viewBox','0 0 '+W+' '+H); ovl.innerHTML='';
-  const g=el('g',{class:'badges'});
-  F.steps.forEach(s=>{const r=s.r;g.append(el('rect',{class:'zone',x:r[0]+3,y:r[1]+3,width:r[2]-r[0]-6,height:r[3]-r[1]-6,rx:8,'aria-label':s.t}))});
+/* ---------- mise en page ---------- */
+function layout(){
+  const W=stage.clientWidth,H=stage.clientHeight; if(!W)return;
+  const s=Math.min(W/FW,H/FH), w=FW*s, h=FH*s;
+  base={s,left:(W-w)/2,top:(H-h)/2,w,h};
+  vw.style.width=w+'px'; vw.style.height=h+'px'; vw.style.left=base.left+'px'; vw.style.top=base.top+'px';
+  applyZ(); drawOverlay(); placeBack();
+}
+function applyZ(){ vw.style.transform='translate('+z.x+'px,'+z.y+'px) scale('+z.k+')'; $('zReset').hidden=(z.k===1&&z.x===0&&z.y===0); vw.classList.toggle('free',z.k!==1) }
+function cur(){return mode==='ov'?OV[ow]:mode==='step'?STEPS[idx]:WH[rw]}
+function toStage(f,u,v){ /* point (unités de la feuille) -> pixels de la scène */
+  const px=(u-f.ux)*f.k+f.ox, py=(v-f.uy)*f.k+f.oy;
+  return [base.left+z.x+px*base.s*z.k, base.top+z.y+py*base.s*z.k];
+}
+function drawOverlay(){
+  ovl.innerHTML=''; ovl.setAttribute('viewBox','0 0 '+FW+' '+FH);
+  if(mode!=='ov'||z.k!==1)return; const f=OV[ow], g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  STEPS.forEach((s,i)=>{
+    const r=s.r, m=3*f.k;
+    let x0=(r[0]-f.ux)*f.k+f.ox+m, y0=(r[1]-f.uy)*f.k+f.oy+m, x1=(r[2]-f.ux)*f.k+f.ox-m, y1=(r[3]-f.uy)*f.k+f.oy-m;
+    x0=Math.max(4,x0);y0=Math.max(4,y0);x1=Math.min(FW-4,x1);y1=Math.min(FH-4,y1); if(x1-x0<30||y1-y0<30)return;
+    const e=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    e.setAttribute('class','zone');e.setAttribute('x',x0);e.setAttribute('y',y0);e.setAttribute('width',x1-x0);e.setAttribute('height',y1-y0);e.setAttribute('rx',8*f.k);
+    e.style.strokeWidth=(1.6*f.k)+'px'; e.style.strokeDasharray=(7*f.k)+' '+(6*f.k); g.append(e);
+  });
   ovl.append(g);
-  $('dots').innerHTML=''; F.steps.forEach((st,i)=>{const d=document.createElement('i');d.title=st.t||'';d.onclick=()=>go(i);$('dots').appendChild(d)});
-  $('home').hidden=true; $('fiche').hidden=false;
-  $('ldg').hidden=false; $('ldg').classList.remove('off');
-  requestAnimationFrame(()=>{render(false);ui();ensurePlayers()});
 }
-function stageWH(){return [stage.clientWidth,stage.clientHeight]}
-function fit(r,pad,padX){const [W,H]=stageWH();const rw=r[2]-r[0],rh=r[3]-r[1];
-  const px=padX==null?pad:padX;
-  const k=Math.min((W-2*px)/rw,(H-2*pad)/rh,3.2);return {cx:(r[0]+r[2])/2,cy:(r[1]+r[3])/2,k}}
-function tf(c){const [W,H]=stageWH();return 'translate('+(W/2-c.cx*c.k)+'px,'+(H/2-c.cy*c.k)+'px) scale('+c.k+')'}
-function curCam(){const [W,H]=stageWH();const m=new DOMMatrix(getComputedStyle(sheet).transform);const k=m.a||1;return {cx:(W/2-m.e)/k,cy:(H/2-m.f)/k,k}}
-function moveTo(t,animate){
-  const final=tf(t);
-  if(animate&&!reduce&&!first){
-    const from=curCam(), dist=Math.hypot(t.cx-from.cx,t.cy-from.cy);
-    const mid={cx:(from.cx+t.cx)/2,cy:(from.cy+t.cy)/2,k:Math.min(from.k,t.k)*Math.max(.6,1-dist/2400)};
-    sheet.style.transform=final;
-    sheet.animate([{transform:tf(from)},{transform:tf(mid),offset:.5},{transform:final}],{duration:Math.min(1050,480+dist*.6),easing:'cubic-bezier(.45,.05,.25,1)'});
-  } else sheet.style.transform=final;
-  first=false;
-}
-/* feuille entière (vue d'ensemble) ou page entière (recto) : ajustée, ou à la largeur avec défilement en paysage */
-function pageCam(){const [W,H]=stageWH(), [SW,SH]=F.size;
-  const kAll=Math.min((W-16)/SW,(H-16)/SH), kW=(W-16)/SW, y0=why?wY:ovY;
-  if(kW>kAll*1.35){const k=Math.min(kW,kAll*2.6), half=H/2/k;
-    const cy=Math.max(half-8/k,Math.min(SH-half+8/k,y0||half-8/k)); if(why)wY=cy;else ovY=cy; return {cx:SW/2,cy,k,pan:true}}
-  return {cx:SW/2,cy:SH/2,k:kAll,pan:false}}
-const ovCam=pageCam;
-function render(animate){
-  const s=F.steps[idx], r=s.r, p=6;
-  sheet.classList.toggle('ov',overview&&!why);
-  free=null; $('zReset').hidden=true; sheet.classList.remove('free');
-  const land=matchMedia('(max-height:520px) and (pointer:coarse)').matches;
-  const cam=(overview||why)?pageCam():(land?fit(r,8,78):fit(r,24));
-  moveTo(cam,animate);
-  const bo=$('backov'), [SW2,SH2]=stageWH();
-  bo.classList.toggle('on',!overview&&!why);
-  if(!overview&&!why){const x=SW2/2+(r[2]+p-cam.cx)*cam.k, y=SH2/2+(r[1]-p-cam.cy)*cam.k;
-    bo.style.left=Math.min(SW2-24,Math.max(24,x))+'px'; bo.style.top=Math.min(SH2-24,Math.max(24,y))+'px'}
-  setTarget(target());
-}
-function ui(){
-  const s=F.steps[idx], n=F.steps.length;
-  $('sec').textContent=why?F.label+' · recto':overview?F.label+' · verso':s.sec;
-  $('ttl').textContent=why?'Le pourquoi : indications, littérature, pièges':overview?F.title:s.t;
-  $('count').textContent=(overview||why)?n+' séquences':String(idx+1).padStart(2,'0')+' / '+String(n).padStart(2,'0');
-  $('prev').disabled=why||(!overview&&idx===0); $('next').disabled=why||(!overview&&idx===n-1);
-  $('next').textContent=overview?'Commencer':'Suivant';
-  [...$('dots').children].forEach((d,i)=>d.classList.toggle('on',!overview&&!why&&i===idx));
-  $('ovBtn').setAttribute('aria-pressed',overview&&!why); $('whyBtn').setAttribute('aria-pressed',why);
-  document.querySelector('.zoom').hidden=why; $('backov').classList.toggle('on',!overview&&!why);
-  $('hint').textContent=why?'Fais glisser pour lire le recto · « Le pourquoi » pour revenir au protocole'
-    :overview?(pageCam().pan?'Fais glisser pour parcourir la fiche · touche une zone pour zoomer dessus · pince pour agrandir':'Touche une zone pour zoomer dessus · pince ou + pour agrandir')
-    :(innerHeight>innerWidth&&innerWidth<600?'Astuce : tourne le téléphone pour agrandir · glisse pour changer de séquence':'Glisse pour changer de séquence · pince ou + pour agrandir · ↶ pour la vue d’ensemble');
-}
-function go(i){if(why)return;const n=Math.max(0,Math.min(F.steps.length-1,i)); if(!overview)lastDir=n>=idx?1:-1; else lastDir=1; idx=n;overview=false;render(true);ui()}
-function setOverview(v){if(why){why=false}if(v&&F){const r=F.steps[idx].r;ovY=(r[1]+r[3])/2}overview=v;lastDir=-1;render(true);ui()}
-$('prev').onclick=()=>overview?null:go(idx-1);
-$('next').onclick=()=>overview?go(0):go(idx+1);
-$('ovBtn').onclick=()=>setOverview(true);
-$('whyBtn').onclick=()=>{why=!why;if(why)wY=0;else first=true;render(false);ui()};
-$('back').onclick=()=>{$('fiche').hidden=true;$('home').hidden=false;teardown()};
-$('backov').addEventListener('pointerdown',e=>e.stopPropagation());
-$('backov').addEventListener('pointerup',e=>e.stopPropagation());
-$('backov').onclick=e=>{e.stopPropagation();setOverview(true)};
-
-/* ---------- gestes (identiques à l'appli) ---------- */
-function baseCam(){return (overview||why)?pageCam():fit(F.steps[idx].r,24)}
-function camNow(){return free||baseCam()}
-function clampCam(c){
-  const b=baseCam(), [W,H]=stageWH(), [SW,SH]=F.size;
-  const k=Math.max(b.k,Math.min(c.k,Math.max(b.k*6,5)));
-  if(k<=b.k*1.03)return null;
-  const hx=W/2/k, hy=H/2/k;
-  const cx=SW*k>W?Math.max(hx,Math.min(SW-hx,c.cx)):SW/2;
-  const cy=SH*k>H?Math.max(hy,Math.min(SH-hy,c.cy)):SH/2;
-  return {cx,cy,k};
-}
-function placeBackov(){
-  if(!F||overview||why)return; const r=F.steps[idx].r,p=6,c=camNow(),[W,H]=stageWH(),bo=$('backov');
-  const x=W/2+(r[2]+p-c.cx)*c.k, y=H/2+(r[1]-p-c.cy)*c.k;
+function placeBack(){
+  const bo=$('backov'), on=mode==='step'; bo.classList.toggle('on',on); if(!on)return;
+  const f=STEPS[idx], r=f.r, [x,y]=toStage(f,r[2]+6,r[1]-6), W=stage.clientWidth,H=stage.clientHeight;
   bo.style.left=Math.min(W-24,Math.max(24,x))+'px'; bo.style.top=Math.min(H-24,Math.max(24,y))+'px';
 }
-function applyCam(c,animate){
-  free=c?clampCam(c):null;
-  const t=camNow();
-  if(animate&&!reduce){const from=curCam();sheet.style.transform=tf(t);sheet.animate([{transform:tf(from)},{transform:tf(t)}],{duration:260,easing:'ease-out'})}
-  else sheet.style.transform=tf(t);
-  placeBackov(); $('zReset').hidden=!free; sheet.classList.toggle('free',!!free);
-  if(overview||why)refreshLater();
-}
-function zoomAt(f,px,py,animate){
-  const c=camNow(),[W,H]=stageWH(), b=stage.getBoundingClientRect();
-  if(px==null){px=b.left+W/2;py=b.top+H/2}
-  const ox=px-b.left-W/2, oy=py-b.top-H/2, wx=c.cx+ox/c.k, wy=c.cy+oy/c.k, k=c.k*f;
-  applyCam({cx:wx-ox/k,cy:wy-oy/k,k},animate);
-}
-$('zIn').onclick=e=>{e.stopPropagation();zoomAt(1.6,null,null,true)};
-$('zOut').onclick=e=>{e.stopPropagation();zoomAt(1/1.6,null,null,true)};
-$('zReset').onclick=e=>{e.stopPropagation();applyCam(null,true)};
-['zIn','zOut','zReset'].forEach(id=>{$(id).addEventListener('pointerdown',e=>e.stopPropagation());$(id).addEventListener('pointerup',e=>e.stopPropagation())});
-$('card33').onclick=openFiche;
-addEventListener('resize',()=>{if(!$('fiche').hidden){render(false);ui()}});
 
-const pts=new Map();
-let sx=null,sy=null,moved=false,pinch=null,drag=null;
-const panKey=()=>why?'w':'o';
+/* ---------- affichage d'une image de la vidéo ---------- */
+async function seek(t){
+  for(let i=0;i<100&&!(P&&ready);i++){ if(i===5)$('vstat').textContent='Chargement du lecteur…'; await sleep(100) }
+  if(!P)return;
+  await new Promise(res=>{ seekWaiters.push(res); setTimeout(res,2500); P.seekTo(t).catch(()=>{}) });
+  try{ await P.play(); await sleep(70); await P.pause() }catch(_){}   /* une image dure 1 s : 70 ms ne la quittent pas */
+  await raf2();
+}
+let busy=null;
+async function showFrame(first){
+  const my=++tok, f=cur(); z={k:1,x:0,y:0}; applyZ();
+  ui();
+  if(!first){vw.style.opacity=0; await sleep(120)}
+  const t0=performance.now(); await seek(f.n+0.5);
+  $('vstat').textContent='image '+f.n+' · '+Math.round(performance.now()-t0)+' ms';
+  if(my!==tok)return;
+  drawOverlay(); placeBack(); vw.style.opacity=1;
+}
+function ui(){
+  const n=STEPS.length;
+  $('sec').textContent=mode==='why'?LABEL+' · recto':mode==='ov'?LABEL+' · verso':STEPS[idx].sec;
+  $('ttl').textContent=mode==='why'?'Le pourquoi : indications, littérature, pièges':mode==='ov'?TITLE:STEPS[idx].t;
+  $('count').textContent=mode!=='step'?n+' séquences':String(idx+1).padStart(2,'0')+' / '+String(n).padStart(2,'0');
+  $('prev').disabled=mode==='why'||(mode==='step'&&idx===0); $('next').disabled=mode==='why'||(mode==='step'&&idx===n-1);
+  $('next').textContent=mode==='ov'?'Commencer':'Suivant';
+  [...$('dots').children].forEach((d,i)=>d.classList.toggle('on',mode==='step'&&i===idx));
+  $('ovBtn').setAttribute('aria-pressed',mode==='ov'); $('whyBtn').setAttribute('aria-pressed',mode==='why');
+  document.querySelector('.zoom').hidden=false;
+  $('hint').textContent=mode==='why'?'Glisse vers le haut ou le bas pour lire le recto · « Le pourquoi » pour revenir au protocole'
+    :mode==='ov'?'Touche une zone pour zoomer dessus · glisse vers le haut ou le bas pour parcourir la fiche · pince pour agrandir'
+    :'Glisse pour changer de séquence · pince ou + pour agrandir · ↶ pour la vue d’ensemble';
+}
+function go(i){ idx=Math.max(0,Math.min(STEPS.length-1,i)); mode='step'; showFrame() }
+function setOv(){ mode='ov'; showFrame() }
+function win(d){ if(mode==='ov'){const k=Math.max(0,Math.min(OV.length-1,ow+d)); if(k===ow)return; ow=k}
+  else if(mode==='why'){const k=Math.max(0,Math.min(WH.length-1,rw+d)); if(k===rw)return; rw=k}
+  showFrame() }
+
+/* ---------- écrans ---------- */
+STEPS.forEach(()=>$('dots').appendChild(document.createElement('i')));
+[...$('dots').children].forEach((d,i)=>{d.style.cursor='pointer';d.onclick=()=>go(i)});
+function openFiche(){
+  $('home').hidden=true; $('fiche').hidden=false;
+  
+  mode='ov'; ow=0; requestAnimationFrame(()=>{layout(); showFrame(true)});
+}
+$('card33').onclick=openFiche;
+$('back').onclick=()=>{$('fiche').hidden=true;$('home').hidden=false};
+$('ovBtn').onclick=()=>{mode==='ov'?0:setOv()};
+$('whyBtn').onclick=()=>{ if(mode==='why'){mode='ov'}else{mode='why';rw=0} showFrame() };
+$('prev').onclick=()=>mode==='step'?go(idx-1):0;
+$('next').onclick=()=>mode==='ov'?go(0):go(idx+1);
+$('backov').addEventListener('pointerdown',e=>e.stopPropagation()); $('backov').addEventListener('pointerup',e=>e.stopPropagation());
+$('backov').onclick=()=>setOv();
+['zIn','zOut','zReset'].forEach(id=>{$(id).addEventListener('pointerdown',e=>e.stopPropagation());$(id).addEventListener('pointerup',e=>e.stopPropagation())});
+addEventListener('resize',()=>{if(!$('fiche').hidden)layout()});
+
+/* ---------- zoom libre ---------- */
+function zoomAt(f,cx,cy){
+  const b=stage.getBoundingClientRect(), px=cx-b.left, py=cy-b.top;
+  const k=Math.max(1,Math.min(5,z.k*f)), r=k/z.k;
+  z.x=px-(px-z.x)*r; z.y=py-(py-z.y)*r; z.k=k;
+  if(k===1){z.x=0;z.y=0}
+  applyZ(); drawOverlay(); placeBack();
+}
+$('zIn').onclick=()=>{const b=stage.getBoundingClientRect();zoomAt(1.5,b.left+b.width/2,b.top+b.height/2)};
+$('zOut').onclick=()=>{const b=stage.getBoundingClientRect();zoomAt(1/1.5,b.left+b.width/2,b.top+b.height/2)};
+$('zReset').onclick=()=>{z={k:1,x:0,y:0};applyZ();drawOverlay();placeBack()};
+
+/* ---------- gestes : balayer, toucher une zone, pincer ---------- */
+const pts=new Map(); let sx=null,sy=null,moved=false,pinch=null,drag=null;
 stage.addEventListener('pointerdown',e=>{
   try{stage.setPointerCapture(e.pointerId)}catch(_){} pts.set(e.pointerId,[e.clientX,e.clientY]);
-  if(pts.size===2&&!why){
-    const [p1,p2]=[...pts.values()];
-    pinch={d:Math.hypot(p1[0]-p2[0],p1[1]-p2[1])||1,mx:(p1[0]+p2[0])/2,my:(p1[1]+p2[1])/2,cam:camNow()};
-    sx=null; drag=null; return;
-  }
-  sx=e.clientX; sy=e.clientY; moved=false;
-  drag={cam:camNow(),ovY:why?wY:ovY};
+  if(pts.size===2){const [a,b]=[...pts.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1])||1,z:{...z}};sx=null;drag=null;return}
+  sx=e.clientX;sy=e.clientY;moved=false;drag={x:z.x,y:z.y};
 });
 stage.addEventListener('pointermove',e=>{
   if(!pts.has(e.pointerId))return; pts.set(e.pointerId,[e.clientX,e.clientY]);
-  if(pinch&&pts.size>=2){
-    const [p1,p2]=[...pts.values()], d=Math.hypot(p1[0]-p2[0],p1[1]-p2[1])||1;
-    const mx=(p1[0]+p2[0])/2, my=(p1[1]+p2[1])/2, b=stage.getBoundingClientRect(), [W,H]=stageWH(), c=pinch.cam;
-    const wx=c.cx+(pinch.mx-b.left-W/2)/c.k, wy=c.cy+(pinch.my-b.top-H/2)/c.k, k=c.k*d/pinch.d;
-    applyCam({cx:wx-(mx-b.left-W/2)/k,cy:wy-(my-b.top-H/2)/k,k}); return;
-  }
-  if(sx===null||!drag)return;
-  const dx=e.clientX-sx, dy=e.clientY-sy; if(Math.hypot(dx,dy)>10)moved=true;
-  if(free){const c=drag.cam;applyCam({cx:c.cx-dx/c.k,cy:c.cy-dy/c.k,k:c.k})}
-  else if((overview||why)&&pageCam().pan){const c=pageCam(); if(why)wY=drag.ovY-dy/c.k; else ovY=drag.ovY-dy/c.k; sheet.style.transform=tf(pageCam());refreshLater()}
+  if(pinch&&pts.size>=2){const [a,b]=[...pts.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1])||1,mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,bb=stage.getBoundingClientRect();
+    const k=Math.max(1,Math.min(5,pinch.z.k*d/pinch.d)),r=k/pinch.z.k,px=mx-bb.left,py=my-bb.top;
+    z={k,x:px-(px-pinch.z.x)*r,y:py-(py-pinch.z.y)*r}; if(k===1){z.x=0;z.y=0} applyZ(); return}
+  if(sx===null||!drag)return; const dx=e.clientX-sx,dy=e.clientY-sy; if(Math.hypot(dx,dy)>10)moved=true;
+  if(z.k>1){z.x=drag.x+dx;z.y=drag.y+dy;applyZ()}
 });
 stage.addEventListener('wheel',e=>{
-  if(!F||$('fiche').hidden)return; e.preventDefault();
-  if(!e.ctrlKey&&!free&&(overview||why)&&pageCam().pan){const c=pageCam(); if(why)wY+=e.deltaY/c.k; else ovY+=e.deltaY/c.k; sheet.style.transform=tf(pageCam());refreshLater();return}
-  if(why)return;
-  if(!e.ctrlKey&&free&&Math.abs(e.deltaX)>Math.abs(e.deltaY)){const c=free;applyCam({cx:c.cx+e.deltaX/c.k,cy:c.cy,k:c.k});return}
-  zoomAt(Math.exp(-e.deltaY*(e.ctrlKey?0.01:0.0025)),e.clientX,e.clientY);
+  e.preventDefault();
+  if(e.ctrlKey){zoomAt(Math.exp(-e.deltaY*0.01),e.clientX,e.clientY);return}
+  if(z.k>1){z.x-=e.deltaX;z.y-=e.deltaY;applyZ();return}
+  if(mode!=='step'){ if(busy)return; busy=setTimeout(()=>busy=null,450); win(e.deltaY>0?1:-1) }
 },{passive:false});
-function endPtr(e){pts.delete(e.pointerId); if(pinch){if(pts.size===0)pinch=null; sx=null; return true} return false}
+function endPtr(e){pts.delete(e.pointerId); if(pinch){if(pts.size===0)pinch=null;sx=null;return true} return false}
 stage.addEventListener('pointercancel',e=>{endPtr(e);sx=null;drag=null});
 stage.addEventListener('pointerup',e=>{
-  if(endPtr(e)||sx===null||why)return; const dx=e.clientX-sx, dy=e.clientY-sy; sx=null; drag=null;
-  if(free)return;
-  if(!overview&&Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.2){go(idx+(dx<0?1:-1));return}
-  if(overview&&!pageCam().pan&&dx<-40&&Math.abs(dx)>Math.abs(dy)*1.2){go(0);return}
-  if(moved)return;
-  if(!overview){setOverview(true);return}
-  const b=stage.getBoundingClientRect(), c=curCam(), [W,H]=stageWH();
-  const wx=c.cx+(e.clientX-b.left-W/2)/c.k, wy=c.cy+(e.clientY-b.top-H/2)/c.k;
-  let best=-1,bd=1e9;
-  F.steps.forEach((s,i)=>{const r=s.r;
-    if(wx>=r[0]&&wx<=r[2]&&wy>=r[1]&&wy<=r[3]){const a=(r[2]-r[0])*(r[3]-r[1]);if(a<bd){bd=a;best=i}}});
+  if(endPtr(e)||sx===null)return; const dx=e.clientX-sx,dy=e.clientY-sy; sx=null; drag=null;
+  if(z.k>1)return;                                   /* zoom libre : on se déplace seulement */
+  const horiz=Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.2, vert=Math.abs(dy)>40&&Math.abs(dy)>Math.abs(dx)*1.2;
+  if(mode==='step'){ if(horiz){go(idx+(dx<0?1:-1));return} if(!moved){setOv()} return }
+  if(vert){win(dy<0?1:-1);return}
+  if(mode==='ov'&&horiz&&dx<0){go(0);return}
+  if(moved||mode!=='ov')return;
+  const b=stage.getBoundingClientRect(), f=OV[ow];
+  const px=((e.clientX-b.left-base.left)/base.s), py=((e.clientY-b.top-base.top)/base.s);      /* pixels de l'image */
+  const u=(px-f.ox)/f.k+f.ux, v=(py-f.oy)/f.k+f.uy; let best=-1,bd=1e9;
+  STEPS.forEach((s,i)=>{const r=s.r; if(u>=r[0]&&u<=r[2]&&v>=r[1]&&v<=r[3]){const a=(r[2]-r[0])*(r[3]-r[1]); if(a<bd){bd=a;best=i}}});
   if(best>=0)go(best);
 });
 addEventListener('keydown',e=>{
-  if($('fiche').hidden||e.altKey||e.ctrlKey||e.metaKey)return;
-  const k=e.key;
-  if(k==='ArrowRight'){e.preventDefault();overview?go(0):go(idx+1)}
-  else if(k==='ArrowLeft'){e.preventDefault();if(!overview)go(idx-1)}
-  else if(k==='o'||k==='O'||k==='Escape'){e.preventDefault();setOverview(true)}
+  if($('fiche').hidden)return; const k=e.key;
+  if(k==='ArrowRight'){e.preventDefault();mode==='ov'?go(0):go(idx+1)}
+  else if(k==='ArrowLeft'){e.preventDefault();if(mode==='step')go(idx-1)}
+  else if(k==='ArrowDown'){e.preventDefault();win(1)} else if(k==='ArrowUp'){e.preventDefault();win(-1)}
+  else if(k==='o'||k==='O'||k==='Escape'){e.preventDefault();setOv()}
 });
-if(!VID||VID==='REMPLACER')dbg('Ajoute ?v=<lien Kinescope de la nouvelle vidéo> à l’adresse');
 
 </script>
 </body>
