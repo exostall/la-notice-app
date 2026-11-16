@@ -4,7 +4,7 @@
 <meta name="referrer" content="origin"><meta name="robots" content="noindex">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>La Notice · test Kinescope v2</title>
+<title>La Notice · test Kinescope v3</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout : accueil = grille de vignettes dessinées ; fiche = scène plein écran (verso entier + caméra qui zoome sur une séquence), barre haute, barre basse. */
@@ -196,8 +196,10 @@ body.veil .veilmsg{display:grid}
 #install .out{align-self:flex-start;border:0;background:none;color:var(--muted);text-decoration:underline;font-size:13px;padding:4px 0}
 #install .ok{color:var(--fg);font-weight:600}
 
-#pA,#pB{position:absolute;left:0;top:0;width:1600px;height:2262px;border:0;transform:scale(.625);transform-origin:0 0;pointer-events:none;background:#fff}
-#pA{z-index:1}#pB{z-index:2;opacity:.01}
+#vclip{position:absolute;left:0;top:0;width:100%;height:100%;overflow:hidden;z-index:1;pointer-events:none}
+#pA,#pB{position:absolute;left:0;top:0;width:2400px;height:480px;border:0;transform-origin:0 0;pointer-events:none;background:#fff}
+#pA{z-index:2}#pB{z-index:3;opacity:.004}
+#veil{position:absolute;inset:0;z-index:4;background:#fff;opacity:0;pointer-events:none}
 .sheet svg{z-index:3}
 .ldg{position:absolute;inset:0;z-index:5;display:grid;place-items:center;background:var(--paper);font-family:var(--font-mono);font-size:12px;color:var(--muted);transition:opacity .35s ease}
 .ldg.off{opacity:0;pointer-events:none}
@@ -223,7 +225,7 @@ body.veil .veilmsg{display:grid}
   </div>
   <div class="stage" id="stage">
     <div class="sheet" id="sheet">
-      <div id="pA"></div><div id="pB"></div>
+      <div id="vclip"><div id="pA"></div><div id="pB"></div></div>
       <svg id="ovl" aria-hidden="false"></svg>
     </div>
     <button class="backov" id="backov" type="button" aria-label="Revenir à la vue d'ensemble" title="Vue d'ensemble">
@@ -251,9 +253,11 @@ body.veil .veilmsg{display:grid}
 const $=id=>document.getElementById(id);
 const NS='http://www.w3.org/2000/svg';
 const F={"label": "Fiche 33", "title": "Préparation d'un onlay", "size": [1000, 1414.05], "steps": [{"r": [17.14, 34.04, 431.19, 245.59], "t": "Occlusion", "sec": "Préparation d'un onlay"}, {"r": [430.22, 16.16, 1000.0, 287.95], "t": "Dépose et éviction carieuse", "sec": "Préparation d'un onlay"}, {"r": [11.51, 250.98, 1000.0, 564.89], "t": "Dentine infectée : révéler et éliminer", "sec": "Préparation d'un onlay"}, {"r": [0.0, 538.93, 983.1, 831.54], "t": "1 · Parois résiduelles ≥ 2 mm", "sec": "Impératifs de préparation"}, {"r": [0.0, 815.62, 1000.0, 1016.41], "t": "2 · Réduction tissulaire selon le matériau", "sec": "Impératifs de préparation"}, {"r": [16.41, 1016.41, 211.56, 1186.58], "t": "3 · Angles internes arrondis", "sec": "Impératifs de préparation"}, {"r": [218.9, 988.49, 566.6, 1188.54], "t": "4 · Angles cavo-superficiels nets", "sec": "Impératifs de préparation"}, {"r": [559.5, 922.87, 783.3, 1198.82], "t": "5 · Pas d'impact occlusal au niveau du joint", "sec": "Impératifs de préparation"}, {"r": [786.97, 999.27, 973.31, 1379.53], "t": "6 · Dépouille marquée", "sec": "Impératifs de préparation"}, {"r": [0.0, 1196.13, 1000.0, 1403.28], "t": "7 · Limite(s) de finition et point(s) de contact", "sec": "Impératifs de préparation"}]};
+const M={"W": 2400, "H": 480, "frames": [{"kind": "ov", "s": 0.339450514479686, "ux": 0, "uy": 0.0, "ox": 0, "oy": 0, "cov": [0, 0.0, 1000, 1414.05], "slot": 0}, {"kind": "ov", "s": 1.0, "ux": 0, "uy": 0.0, "ox": 0, "oy": 0, "cov": [0, 0.0, 1000, 480.0], "slot": 1}, {"kind": "ov", "s": 1.0, "ux": 0, "uy": 311.0, "ox": 0, "oy": 0, "cov": [0, 311.0, 1000, 791.0], "slot": 2}, {"kind": "ov", "s": 1.0, "ux": 0, "uy": 623.0, "ox": 0, "oy": 0, "cov": [0, 623.0, 1000, 1103.0], "slot": 3}, {"kind": "ov", "s": 1.0, "ux": 0, "uy": 934.0, "ox": 0, "oy": 0, "cov": [0, 934.0, 1000, 1414.0], "slot": 4}, {"kind": "ov", "s": 2.0, "ux": 0, "uy": 0.0, "ox": 0, "oy": 0, "cov": [0, 0.0, 1000, 240.0], "slot": 5}, {"kind": "ov", "s": 2.0, "ux": 0, "uy": 167.5, "ox": 0, "oy": 0, "cov": [0, 167.5, 1000, 407.5], "slot": 6}, {"kind": "ov", "s": 2.0, "ux": 0, "uy": 335.5, "ox": 0, "oy": 0, "cov": [0, 335.5, 1000, 575.5], "slot": 7}, {"kind": "ov", "s": 2.0, "ux": 0, "uy": 503.0, "ox": 0, "oy": 0, "cov": [0, 503.0, 1000, 743.0], "slot": 8}, {"kind": "ov", "s": 2.0, "ux": 0, "uy": 671.0, "ox": 0, "oy": 0, "cov": [0, 671.0, 1000, 911.0], "slot": 9}, {"kind": "ov", "s": 2.0, "ux": 0, "uy": 838.5, "ox": 0, "oy": 0, "cov": [0, 838.5, 1000, 1078.5], "slot": 10}, {"kind": "ov", "s": 2.0, "ux": 0, "uy": 1006.5, "ox": 0, "oy": 0, "cov": [0, 1006.5, 1000, 1246.5], "slot": 11}, {"kind": "ov", "s": 2.0, "ux": 0, "uy": 1174.0, "ox": 0, "oy": 0, "cov": [0, 1174.0, 1000, 1414.0], "slot": 12}, {"kind": "rec", "s": 0.339450514479686, "ux": 0, "uy": 0.0, "ox": 0, "oy": 0, "cov": [0, 0.0, 1000, 1414.05], "slot": 13}, {"kind": "rec", "s": 1.2, "ux": 0, "uy": 0.0, "ox": 0, "oy": 0, "cov": [0, 0.0, 1000, 400.0], "slot": 14}, {"kind": "rec", "s": 1.2, "ux": 0, "uy": 253.33333333333334, "ox": 0, "oy": 0, "cov": [0, 253.33333333333334, 1000, 653.3333333333334], "slot": 15}, {"kind": "rec", "s": 1.2, "ux": 0, "uy": 506.6666666666667, "ox": 0, "oy": 0, "cov": [0, 506.6666666666667, 1000, 906.6666666666667], "slot": 16}, {"kind": "rec", "s": 1.2, "ux": 0, "uy": 760.8333333333334, "ox": 0, "oy": 0, "cov": [0, 760.8333333333334, 1000, 1160.8333333333335], "slot": 17}, {"kind": "rec", "s": 1.2, "ux": 0, "uy": 1014.1666666666667, "ox": 0, "oy": 0, "cov": [0, 1014.1666666666667, 1000, 1414.05], "slot": 18}, {"kind": "rec", "s": 2.4, "ux": 0, "uy": 0.0, "ox": 0, "oy": 0, "cov": [0, 0.0, 1000, 200.0], "slot": 19}, {"kind": "rec", "s": 2.4, "ux": 0, "uy": 135.0, "ox": 0, "oy": 0, "cov": [0, 135.0, 1000, 335.0], "slot": 20}, {"kind": "rec", "s": 2.4, "ux": 0, "uy": 270.0, "ox": 0, "oy": 0, "cov": [0, 270.0, 1000, 470.0], "slot": 21}, {"kind": "rec", "s": 2.4, "ux": 0, "uy": 404.58333333333337, "ox": 0, "oy": 0, "cov": [0, 404.58333333333337, 1000, 604.5833333333334], "slot": 22}, {"kind": "rec", "s": 2.4, "ux": 0, "uy": 539.5833333333334, "ox": 0, "oy": 0, "cov": [0, 539.5833333333334, 1000, 739.5833333333334], "slot": 23}, {"kind": "rec", "s": 2.4, "ux": 0, "uy": 674.5833333333334, "ox": 0, "oy": 0, "cov": [0, 674.5833333333334, 1000, 874.5833333333334], "slot": 24}, {"kind": "rec", "s": 2.4, "ux": 0, "uy": 809.5833333333334, "ox": 0, "oy": 0, "cov": [0, 809.5833333333334, 1000, 1009.5833333333334], "slot": 25}, {"kind": "rec", "s": 2.4, "ux": 0, "uy": 944.1666666666667, "ox": 0, "oy": 0, "cov": [0, 944.1666666666667, 1000, 1144.1666666666667], "slot": 26}, {"kind": "rec", "s": 2.4, "ux": 0, "uy": 1079.1666666666667, "ox": 0, "oy": 0, "cov": [0, 1079.1666666666667, 1000, 1279.1666666666667], "slot": 27}, {"kind": "rec", "s": 2.4, "ux": 0, "uy": 1214.1666666666667, "ox": 0, "oy": 0, "cov": [0, 1214.1666666666667, 1000, 1414.05], "slot": 28}, {"kind": "step", "step": 0, "s": 2.072986396026776, "ux": 17.14, "uy": 34.04, "ox": 770.8399913625567, "oy": 20.72986396026775, "cov": [-354.71000000000004, 24.040000000000006, 803.04, 255.59000000000003], "slot": 29}, {"kind": "step", "step": 1, "s": 1.645018677816238, "ux": 430.22, "uy": 16.16, "ox": 731.350628876932, "oy": 16.45018677816239, "cov": [-14.364999999999895, 6.159999999999993, 1444.585, 297.94999999999993], "slot": 30}, {"kind": "step", "step": 2, "s": 1.4375131023329641, "ux": 11.51, "uy": 250.98, "ox": 489.51633673744413, "oy": 14.37513102332963, "cov": [-329.0199999999999, 240.98, 1340.5299999999997, 574.89], "slot": 31}, {"kind": "step", "step": 3, "s": 1.535459518249576, "ux": 0.0, "uy": 538.93, "ox": 445.2448738044209, "oy": 15.354595182495757, "cov": [-289.975, 528.93, 1273.0750000000003, 841.54], "slot": 32}, {"kind": "step", "step": 4, "s": 2.1740115041442096, "ux": 0.0, "uy": 815.62, "ox": 112.99424792789523, "oy": 21.740115041442124, "cov": [-51.97499999999997, 805.62, 1051.975, 1026.41], "slot": 33}, {"kind": "step", "step": 5, "s": 2.524057422306358, "ux": 16.41, "uy": 1016.41, "ox": 953.7150970184571, "oy": 25.24057422306359, "cov": [-361.4399999999999, 1006.41, 589.4099999999999, 1196.58], "slot": 34}, {"kind": "step", "step": 6, "s": 2.1813224267212004, "ux": 218.9, "uy": 988.49, "ox": 820.7770961145193, "oy": 21.81322426721198, "cov": [-157.3749999999998, 978.49, 942.875, 1198.54], "slot": 35}, {"kind": "step", "step": 7, "s": 1.621895590471364, "ux": 559.5, "uy": 922.87, "ox": 1018.5098834262544, "oy": 16.218955904713624, "cov": [-68.4749999999998, 912.87, 1411.2749999999996, 1208.82], "slot": 36}, {"kind": "step", "step": 8, "s": 1.199220506670664, "ux": 786.97, "uy": 999.27, "ox": 1088.2686253934942, "oy": 11.992205066706646, "cov": [-120.50999999999999, 989.27, 1880.79, 1389.53], "slot": 37}, {"kind": "step", "step": 9, "s": 2.113141096191945, "ux": 0.0, "uy": 1196.13, "ox": 143.4294519040277, "oy": 21.13141096191947, "cov": [-67.87499999999974, 1186.13, 1067.8749999999995, 1413.28], "slot": 38}, {"kind": "dup", "s": 1, "ux": 0, "uy": 0, "ox": 0, "oy": 0, "cov": [0, 0, 0, 0], "slot": 39}]}; const FR=M.frames;
+const SLOT_FIRST=0, SLOT_STEP=t=>FR.findIndex(f=>f.kind==='step'&&f.step===t);
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* identifiant Kinescope de la vidéo : ?v=<lien ou identifiant> ou valeur par défaut */
-const VID=(()=>{let v=new URLSearchParams(location.search).get('v')||'kZJnZPiTAPrwvAgMwznDJE';v=v.trim().replace(/[?#].*$/,'').split('/').filter(Boolean).pop()||'';return v})();
+const VID=(()=>{let v=new URLSearchParams(location.search).get('v')||'';v=v.trim().replace(/[?#].*$/,'').split('/').filter(Boolean).pop()||'';return v})();
 const KURL='https://kinescope.io/'+VID;
 const dbgEl=$('dbg'); const dbg=t=>{dbgEl.textContent=t};
 
@@ -276,19 +280,22 @@ let factory=null; const apiReady=new Promise(res=>{window.onKinescopeIframeAPIRe
 {const s=document.createElement('script');s.src='https://player.kinescope.io/latest/iframe.player.js';s.async=true;s.onerror=()=>dbg('Script Kinescope bloqué');document.head.appendChild(s)}
 const PL=[]; let vis=0, curFrame=-1, swapTok=0, busyUntil=0, rvTimer=null, lastDir=1, playersP=null;
 function seekP(pl,t){return new Promise(res=>{let d=false;const fin=()=>{if(!d){d=true;res()}};pl.w.push(fin);setTimeout(fin,3500);pl.p.seekTo(t).catch(fin)})}
+function place(pl,frame){const f=FR[frame]; if(!f||!pl.el)return;
+  pl.el.style.width=M.W+'px'; pl.el.style.height=M.H+'px';
+  pl.el.style.transform='translate('+(f.ux-f.ox/f.s)+'px,'+(f.uy-f.oy/f.s)+'px) scale('+(1/f.s)+')'}
 function prepare(pl,frame){
   const tok=++pl.tok; pl.frame=frame; pl.ok=false;
   pl.chain=pl.chain.then(async()=>{
-    if(pl.tok!==tok)return; const t0=performance.now();
+    if(pl.tok!==tok)return; const t0=performance.now(); place(pl,frame);
     await pl.ready; await seekP(pl,frame+0.4);
     try{await pl.p.play();await sleep(60);await pl.p.pause()}catch(_){}   /* une image dure 1 s : 60 ms ne la quittent pas */
-    await sleep(40);
+    await sleep(160);   /* laisse à l'image le temps d'être réellement peinte avant tout affichage */
     if(pl.tok===tok){pl.ok=true;pl.ms=Math.round(performance.now()-t0);status()}
   });
   return pl.chain;
 }
 function status(){dbg('A:'+(PL[0]?fl(PL[0]):'-')+'  B:'+(PL[1]?fl(PL[1]):'-')+'  · préparation '+Math.max(PL[0]?PL[0].ms||0:0,PL[1]?PL[1].ms||0:0)+' ms'+(qual?'\n'+qual:''))}
-const fl=p=>(p.frame<0?'–':p.frame===0?'vue':p.frame===11?'recto':'s'+p.frame)+(p.ok?' ✓':' …');
+const fl=p=>(p.frame<0?'–':FR[p.frame].kind+(FR[p.frame].kind==='step'?FR[p.frame].step+1:'')+'@'+(+FR[p.frame].s).toFixed(1))+(p.ok?' ✓':' …');
 let qual='';
 async function makePlayer(id,z){
   const f=await apiReady;
@@ -312,16 +319,18 @@ async function makePlayer(id,z){
 function ensurePlayers(){
   if(playersP)return playersP;
   playersP=(async()=>{
-    const [a,b]=await Promise.all([makePlayer('pA',1),makePlayer('pB',2)]); b.el.style.opacity='.01'; PL.push(a,b); vis=0;
-    await prepare(a,0); curFrame=0;
+    const [a,b]=await Promise.all([makePlayer('pA',1),makePlayer('pB',2)]); b.el.style.opacity='.004'; PL.push(a,b); vis=0;
+    await prepare(a,0); curFrame=0; await sleep(250); refreshFrame(true);
     $('ldg').classList.add('off'); setTimeout(()=>$('ldg').hidden=true,400);
     preloadNext();
   })();
   return playersP;
 }
-function predict(){const f=curFrame; if(f<=0||f>=11)return 1; return lastDir>=0?(f<10?f+1:f-1):(f>1?f-1:f+1)}
+function predict(){const f=FR[curFrame]; if(!f||f.kind!=='step')return SLOT_STEP(Math.max(0,Math.min(F.steps.length-1,idx)));
+  const n=F.steps.length, t=f.step+(lastDir>=0?1:-1); return SLOT_STEP(t>=0&&t<n?t:f.step-(lastDir>=0?1:-1))}
 function preloadNext(){const sp=PL[1-vis]; if(!sp)return; const p=predict(); if(sp.frame!==p)prepare(sp,p)}
-async function showFrame(frame){
+const veil=document.createElement('div'); veil.id='veil'; document.getElementById('stage').appendChild(veil);
+async function showFrame(frame,soft){
   if(!PL.length){curFrame=frame;return}
   const my=++swapTok; curFrame=frame;
   if(PL[vis].frame===frame&&PL[vis].ok)return;
@@ -331,15 +340,31 @@ async function showFrame(frame){
   const sp=PL[1-vis];
   await (sp.frame===frame?sp.chain:prepare(sp,frame));
   if(my!==swapTok||sp.frame!==frame)return;
-  /* révélation : le lecteur du dessus (déjà prêt, quasi transparent) apparaît en .5 s par-dessus l'autre, comme les calques de l'appli */
   const out=PL[vis], inc=PL[1-vis];
-  inc.el.style.transition=reduce?'none':'opacity .5s ease'; inc.el.style.opacity=1; vis=1-vis;
-  busyUntil=performance.now()+(reduce?30:560);
+  /* coupure franche (jamais de fondu sur la vidéo protégée : elle noircit) ; changement de séquence masqué par un voile blanc qui, lui, se fond */
+  if(!soft&&!reduce){veil.style.transition='opacity .14s ease';veil.style.opacity=1;await sleep(150);if(my!==swapTok)return}
+  inc.el.style.transition='none'; inc.el.style.opacity=1; inc.el.style.zIndex=2; out.el.style.zIndex=1; vis=1-vis;
+  busyUntil=performance.now()+(soft?60:420);
+  if(!soft&&!reduce){await sleep(140);veil.style.transition='opacity .26s ease';veil.style.opacity=0}
   clearTimeout(rvTimer); rvTimer=setTimeout(()=>{
-    out.el.style.transition='none'; out.el.style.zIndex=2; out.el.style.opacity='.01';
-    inc.el.style.transition='none'; inc.el.style.zIndex=1;
-    preloadNext(); status()},reduce?30:560);
+    out.el.style.opacity='.004'; out.el.style.zIndex=3;   /* réserve : au-dessus, quasi transparente, toujours peinte */
+    inc.el.style.zIndex=2; preloadNext(); status()},soft?60:420);
 }
+/* image la plus nette qui couvre entièrement la zone visible (feuille composée ou recto) ; sinon la page entière */
+function pickLevel(kind,c){
+  const [W,H]=stageWH(), [SW,SH]=F.size, m=2;
+  const x0=Math.max(0,c.cx-W/2/c.k)+m, x1=Math.min(SW,c.cx+W/2/c.k)-m, y0=Math.max(0,c.cy-H/2/c.k)+m, y1=Math.min(SH,c.cy+H/2/c.k)-m;
+  let best=-1;
+  FR.forEach((f,i)=>{if(f.kind!==kind)return; const v=f.cov; if(v[0]<=x0&&v[2]>=x1&&v[1]<=y0&&v[3]>=y1&&(best<0||f.s>FR[best].s))best=i});
+  if(best<0)best=FR.findIndex(f=>f.kind===kind);
+  return best}
+function frameFor(){
+  if(why)return pickLevel('rec',camNow());
+  if(overview)return pickLevel('ov',camNow());
+  return SLOT_STEP(idx)}
+let rfTimer=null;
+function refreshFrame(soft){ if($('fiche').hidden||!PL.length)return; showFrame(frameFor(),soft!==false) }
+function refreshLater(){clearTimeout(rfTimer); rfTimer=setTimeout(()=>refreshFrame(true),240)}
 
 /* ---------- Fiche (reprise de l'appli) ---------- */
 const sheet=$('sheet'), stage=$('stage'), ovl=$('ovl');
@@ -380,7 +405,6 @@ function pageCam(){const [W,H]=stageWH(), [SW,SH]=F.size;
     const cy=Math.max(half-8/k,Math.min(SH-half+8/k,y0||half-8/k)); if(why)wY=cy;else ovY=cy; return {cx:SW/2,cy,k,pan:true}}
   return {cx:SW/2,cy:SH/2,k:kAll,pan:false}}
 const ovCam=pageCam;
-function frameFor(){return why?11:overview?0:idx+1}
 function render(animate){
   const s=F.steps[idx], r=s.r, p=6;
   sheet.classList.toggle('ov',overview&&!why);
@@ -392,7 +416,7 @@ function render(animate){
   bo.classList.toggle('on',!overview&&!why);
   if(!overview&&!why){const x=SW2/2+(r[2]+p-cam.cx)*cam.k, y=SH2/2+(r[1]-p-cam.cy)*cam.k;
     bo.style.left=Math.min(SW2-24,Math.max(24,x))+'px'; bo.style.top=Math.min(SH2-24,Math.max(24,y))+'px'}
-  showFrame(frameFor());
+  showFrame(frameFor(),overview&&!why&&PL.length&&FR[PL[vis].frame]&&FR[PL[vis].frame].kind==='ov');
 }
 function ui(){
   const s=F.steps[idx], n=F.steps.length;
@@ -442,6 +466,7 @@ function applyCam(c,animate){
   if(animate&&!reduce){const from=curCam();sheet.style.transform=tf(t);sheet.animate([{transform:tf(from)},{transform:tf(t)}],{duration:260,easing:'ease-out'})}
   else sheet.style.transform=tf(t);
   placeBackov(); $('zReset').hidden=!free; sheet.classList.toggle('free',!!free);
+  if(overview||why)refreshLater();
 }
 function zoomAt(f,px,py,animate){
   const c=camNow(),[W,H]=stageWH(), b=stage.getBoundingClientRect();
@@ -480,11 +505,11 @@ stage.addEventListener('pointermove',e=>{
   if(sx===null||!drag)return;
   const dx=e.clientX-sx, dy=e.clientY-sy; if(Math.hypot(dx,dy)>10)moved=true;
   if(free){const c=drag.cam;applyCam({cx:c.cx-dx/c.k,cy:c.cy-dy/c.k,k:c.k})}
-  else if((overview||why)&&pageCam().pan){const c=pageCam(); if(why)wY=drag.ovY-dy/c.k; else ovY=drag.ovY-dy/c.k; sheet.style.transform=tf(pageCam())}
+  else if((overview||why)&&pageCam().pan){const c=pageCam(); if(why)wY=drag.ovY-dy/c.k; else ovY=drag.ovY-dy/c.k; sheet.style.transform=tf(pageCam());refreshLater()}
 });
 stage.addEventListener('wheel',e=>{
   if(!F||$('fiche').hidden)return; e.preventDefault();
-  if(!e.ctrlKey&&!free&&(overview||why)&&pageCam().pan){const c=pageCam(); if(why)wY+=e.deltaY/c.k; else ovY+=e.deltaY/c.k; sheet.style.transform=tf(pageCam());return}
+  if(!e.ctrlKey&&!free&&(overview||why)&&pageCam().pan){const c=pageCam(); if(why)wY+=e.deltaY/c.k; else ovY+=e.deltaY/c.k; sheet.style.transform=tf(pageCam());refreshLater();return}
   if(why)return;
   if(!e.ctrlKey&&free&&Math.abs(e.deltaX)>Math.abs(e.deltaY)){const c=free;applyCam({cx:c.cx+e.deltaX/c.k,cy:c.cy,k:c.k});return}
   zoomAt(Math.exp(-e.deltaY*(e.ctrlKey?0.01:0.0025)),e.clientX,e.clientY);
