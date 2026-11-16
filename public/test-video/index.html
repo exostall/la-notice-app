@@ -257,7 +257,7 @@ const M={"W": 1920, "H": 384, "frames": [{"kind": "ov", "lvl": 0, "s": 0.8, "ux"
 const SLOT_FIRST=0, SLOT_STEP=t=>FR.findIndex(f=>f.kind==='step'&&f.step===t);
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* identifiant Kinescope de la vidéo : ?v=<lien ou identifiant> ou valeur par défaut */
-const VID=(()=>{let v=new URLSearchParams(location.search).get('v')||'';v=v.trim().replace(/[?#].*$/,'').split('/').filter(Boolean).pop()||'';return v})();
+const VID=(()=>{let v=new URLSearchParams(location.search).get('v')||'kFPPqNyjBGc47EScy9jv4B';v=v.trim().replace(/[?#].*$/,'').split('/').filter(Boolean).pop()||'';return v})();
 const KURL='https://kinescope.io/'+VID;
 const dbgEl=$('dbg'); const dbg=t=>{dbgEl.textContent=t};
 
