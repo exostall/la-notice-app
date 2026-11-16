@@ -223,7 +223,7 @@ body.veil .veilmsg{display:grid}
     <button class="pill" id="whyBtn" type="button" aria-pressed="false">Le pourquoi</button>
   </div>
   <div class="stage" id="stage">
-    <div class="vwrap" id="vwrap"><div id="kp"></div><div id="kp1"></div><div id="kp2"></div><div id="kp3"></div><svg id="ovl" aria-hidden="true"></svg></div>
+    <div class="vwrap" id="vwrap"><div id="kp"></div><svg id="ovl" aria-hidden="true"></svg></div>
     <button class="backov" id="backov" type="button" aria-label="Revenir à la vue d'ensemble" title="Vue d'ensemble">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
     </button>
@@ -525,42 +525,26 @@ drawWatermark(); setInterval(drawWatermark,60000);
 
 /* lecteur Kinescope (iframe cachée, contrôles masqués, pilotée par l'API) */
 const KURL='https://kinescope.io/491PxyQaPDh633uek7VuMA';
-const POOL=[]; const SHW=1000, SHH=1414.05;
+let P=null, seekWaiters=[];
 window.onKinescopeIframeAPIReady=function(f){
-  ['kp','kp1','kp2','kp3'].forEach((id,i)=>{
-    f.create(id,{url:KURL,size:{width:'100%',height:'100%'},
-      behavior:{autoPlay:false,muted:true,preload:'auto',keyboard:false,localStorage:false,playsInline:true},
-      ui:{controls:false,mainPlayButton:false}
-    }).then(p=>{
-      const pl={p,w:[],ready:false,id}; POOL[i]=pl;
-      p.on(p.Events.Seeked,()=>{const w=pl.w;pl.w=[];w.forEach(r=>r())});
-      p.on(p.Events.Error,e=>{$('vstat').textContent='Erreur lecteur : '+JSON.stringify(e&&e.data||e)});
-      const ok=()=>{if(!pl.ready){pl.ready=true; if(POOL.every(x=>x&&x.ready))$('vstat').textContent='Lecteur Kinescope prêt'}};
-      p.once(p.Events.Loaded,ok); if(p.Events.Ready)try{p.once(p.Events.Ready,ok)}catch(_){}
-      setTimeout(ok,8000);
-    }).catch(e=>{$('vstat').textContent='Lecteur indisponible : '+e});
-  });
+  f.create('kp',{url:KURL,size:{width:'100%',height:'100%'},
+    behavior:{autoPlay:false,muted:true,preload:'auto',keyboard:false,localStorage:false,playsInline:true},
+    ui:{controls:false,mainPlayButton:false}
+  }).then(p=>{
+    P=p;
+    p.on(p.Events.Seeked,()=>{const w=seekWaiters;seekWaiters=[];w.forEach(r=>r())});
+    p.on(p.Events.Error,e=>{$('vstat').textContent='Erreur lecteur : '+JSON.stringify(e&&e.data||e)});
+    p.once(p.Events.Loaded,()=>{ready=true;$('vstat').textContent='Lecteur Kinescope prêt'});
+    setTimeout(()=>{ if(!ready) $('vstat').textContent='Lecteur en attente…' },4000);
+  }).catch(e=>{$('vstat').textContent='Lecteur indisponible : '+e});
 };
-function frameEl(i){const e=document.getElementById(POOL[i]?POOL[i].id:['kp','kp1','kp2','kp3'][i]); return e?(e.tagName==='IFRAME'?e:(e.querySelector('iframe')||e)):null}
-/* disposition des 4 lecteurs : empilés (vue d'ensemble) ou un seul plein cadre (séquences, recto) */
-function styleFrames(){
-  for(let i=0;i<4;i++){
-    const fr=frameEl(i); if(!fr)continue;
-    if(mode==='ov'){
-      const f=OV[i], sc=base.s/f.k;
-      fr.style.cssText='position:absolute;left:0;top:0;width:'+FW+'px;height:'+FH+'px;border:0;display:block;pointer-events:none;transform-origin:0 0;transform:translate(0px,'+(f.uy*base.s)+'px) scale('+sc+')';
-    } else if(i===0){ fr.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0;display:block;pointer-events:none' }
-    else { fr.style.cssText='position:absolute;left:0;top:0;width:10px;height:10px;border:0;visibility:hidden;pointer-events:none' }
-  }
-}
 {const s=document.createElement('script');s.src='https://player.kinescope.io/latest/iframe.player.js';s.async=true;s.onerror=()=>{$('vstat').textContent='Script Kinescope bloqué'};document.head.appendChild(s)}
 
 /* ---------- mise en page ---------- */
 function layout(){
   const W=stage.clientWidth,H=stage.clientHeight; if(!W)return;
-  const st=mode==='ov', s=st?Math.min(W/SHW,H/SHH)*0.985:Math.min(W/FW,H/FH), w=(st?SHW:FW)*s, h=(st?SHH:FH)*s;
-  base={s,left:(W-w)/2,top:(H-h)/2,w,h,stack:st};
-  styleFrames();
+  const s=Math.min(W/FW,H/FH), w=FW*s, h=FH*s;
+  base={s,left:(W-w)/2,top:(H-h)/2,w,h};
   vw.style.width=w+'px'; vw.style.height=h+'px'; vw.style.left=base.left+'px'; vw.style.top=base.top+'px';
   applyZ(); drawOverlay(); placeBack();
 }
@@ -572,11 +556,6 @@ function toStage(f,u,v){ /* point (unités de la feuille) -> pixels de la scène
 }
 function drawOverlay(){
   ovl.innerHTML=''; ovl.setAttribute('viewBox','0 0 '+FW+' '+FH);
-  if(mode==='ov'&&z.k===1){ ovl.setAttribute('viewBox','0 0 '+SHW+' '+SHH); const g=document.createElementNS('http://www.w3.org/2000/svg','g');
-    STEPS.forEach(s=>{const r=s.r, e=document.createElementNS('http://www.w3.org/2000/svg','rect');
-      e.setAttribute('class','zone');e.setAttribute('x',r[0]+3);e.setAttribute('y',r[1]+3);e.setAttribute('width',r[2]-r[0]-6);e.setAttribute('height',r[3]-r[1]-6);e.setAttribute('rx',8);
-      e.style.strokeWidth='3px'; e.style.strokeDasharray='14 12'; g.append(e)});
-    ovl.append(g); return }
   if(mode!=='ov'||z.k!==1)return; const f=OV[ow], g=document.createElementNS('http://www.w3.org/2000/svg','g');
   STEPS.forEach((s,i)=>{
     const r=s.r, m=3*f.k;
@@ -595,22 +574,22 @@ function placeBack(){
 }
 
 /* ---------- affichage d'une image de la vidéo ---------- */
-async function seekPl(pl_i,t){
-  for(let i=0;i<120&&!(POOL[pl_i]&&POOL[pl_i].ready);i++){ if(i===5)$('vstat').textContent='Chargement du lecteur…'; await sleep(100) }
-  const pl=POOL[pl_i]; if(!pl)return;
-  await new Promise(res=>{ pl.w.push(res); setTimeout(res,2500); pl.p.seekTo(t).catch(()=>{}) });
-  try{ await pl.p.play(); await sleep(70); await pl.p.pause() }catch(_){}   /* une image dure 1 s : 70 ms ne la quittent pas */
+async function seek(t){
+  for(let i=0;i<100&&!(P&&ready);i++){ if(i===5)$('vstat').textContent='Chargement du lecteur…'; await sleep(100) }
+  if(!P)return;
+  await new Promise(res=>{ seekWaiters.push(res); setTimeout(res,2500); P.seekTo(t).catch(()=>{}) });
+  try{ await P.play(); await sleep(70); await P.pause() }catch(_){}   /* une image dure 1 s : 70 ms ne la quittent pas */
+  await raf2();
 }
-async function seek(t){ if(mode==='ov'){ await Promise.all(OV.map((f,i)=>seekPl(i,f.n+0.5))) } else await seekPl(0,t); await raf2() }
 let busy=null;
 async function showFrame(first){
-  const my=++tok, f=cur(); z={k:1,x:0,y:0}; layout();
+  const my=++tok, f=cur(); z={k:1,x:0,y:0}; applyZ();
   ui();
   if(!first){vw.style.opacity=0; await sleep(120)}
   const t0=performance.now(); await seek(f.n+0.5);
   $('vstat').textContent='image '+f.n+' · '+Math.round(performance.now()-t0)+' ms';
   if(my!==tok)return;
-  layout(); drawOverlay(); placeBack(); vw.style.opacity=1;
+  drawOverlay(); placeBack(); vw.style.opacity=1;
 }
 function ui(){
   const n=STEPS.length;
@@ -628,8 +607,8 @@ function ui(){
 }
 function go(i){ idx=Math.max(0,Math.min(STEPS.length-1,i)); mode='step'; showFrame() }
 function setOv(){ mode='ov'; showFrame() }
-function win(d){ if(mode==='ov')return;
-  if(mode==='why'){const k=Math.max(0,Math.min(WH.length-1,rw+d)); if(k===rw)return; rw=k}
+function win(d){ if(mode==='ov'){const k=Math.max(0,Math.min(OV.length-1,ow+d)); if(k===ow)return; ow=k}
+  else if(mode==='why'){const k=Math.max(0,Math.min(WH.length-1,rw+d)); if(k===rw)return; rw=k}
   showFrame() }
 
 /* ---------- écrans ---------- */
@@ -682,7 +661,7 @@ stage.addEventListener('wheel',e=>{
   e.preventDefault();
   if(e.ctrlKey){zoomAt(Math.exp(-e.deltaY*0.01),e.clientX,e.clientY);return}
   if(z.k>1){z.x-=e.deltaX;z.y-=e.deltaY;applyZ();return}
-  if(mode==='why'){ if(busy)return; busy=setTimeout(()=>busy=null,450); win(e.deltaY>0?1:-1) }
+  if(mode!=='step'){ if(busy)return; busy=setTimeout(()=>busy=null,450); win(e.deltaY>0?1:-1) }
 },{passive:false});
 function endPtr(e){pts.delete(e.pointerId); if(pinch){if(pts.size===0)pinch=null;sx=null;return true} return false}
 stage.addEventListener('pointercancel',e=>{endPtr(e);sx=null;drag=null});
@@ -691,13 +670,10 @@ stage.addEventListener('pointerup',e=>{
   if(z.k>1)return;                                   /* zoom libre : on se déplace seulement */
   const horiz=Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.2, vert=Math.abs(dy)>40&&Math.abs(dy)>Math.abs(dx)*1.2;
   if(mode==='step'){ if(horiz){go(idx+(dx<0?1:-1));return} if(!moved){setOv()} return }
-  if(vert){ if(mode!=='ov')win(dy<0?1:-1); return}
+  if(vert){win(dy<0?1:-1);return}
   if(mode==='ov'&&horiz&&dx<0){go(0);return}
   if(moved||mode!=='ov')return;
   const b=stage.getBoundingClientRect(), f=OV[ow];
-  if(base.stack){const u=(e.clientX-b.left-base.left)/base.s, v=(e.clientY-b.top-base.top)/base.s; let best=-1,bd=1e9;
-    STEPS.forEach((s,i)=>{const r=s.r; if(u>=r[0]&&u<=r[2]&&v>=r[1]&&v<=r[3]){const a=(r[2]-r[0])*(r[3]-r[1]); if(a<bd){bd=a;best=i}}});
-    if(best>=0)go(best); return}
   const px=((e.clientX-b.left-base.left)/base.s), py=((e.clientY-b.top-base.top)/base.s);      /* pixels de l'image */
   const u=(px-f.ox)/f.k+f.ux, v=(py-f.oy)/f.k+f.uy; let best=-1,bd=1e9;
   STEPS.forEach((s,i)=>{const r=s.r; if(u>=r[0]&&u<=r[2]&&v>=r[1]&&v<=r[3]){const a=(r[2]-r[0])*(r[3]-r[1]); if(a<bd){bd=a;best=i}}});
