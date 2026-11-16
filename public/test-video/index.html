@@ -197,11 +197,11 @@ body.veil .veilmsg{display:grid}
 #install .ok{color:var(--fg);font-weight:600}
 
 #pA,#pB{position:absolute;left:0;top:0;width:1600px;height:2262px;border:0;transform:scale(.625);transform-origin:0 0;pointer-events:none;background:#fff}
-#pA{z-index:2}#pB{z-index:1}
+#pA{z-index:1}#pB{z-index:2;opacity:.01}
 .sheet svg{z-index:3}
 .ldg{position:absolute;inset:0;z-index:5;display:grid;place-items:center;background:var(--paper);font-family:var(--font-mono);font-size:12px;color:var(--muted);transition:opacity .35s ease}
 .ldg.off{opacity:0;pointer-events:none}
-#dbg{position:fixed;left:8px;bottom:3px;z-index:9;font:10px var(--font-mono);color:var(--muted);pointer-events:none;opacity:.8}
+#dbg{white-space:pre-wrap;max-width:96vw;position:fixed;left:8px;bottom:3px;z-index:9;font:10px var(--font-mono);color:var(--muted);pointer-events:none;opacity:.8}
 </style>
 </head>
 <body>
@@ -287,7 +287,7 @@ function prepare(pl,frame){
   });
   return pl.chain;
 }
-function status(){dbg('A:'+(PL[0]?fl(PL[0]):'-')+'  B:'+(PL[1]?fl(PL[1]):'-')+'  · préparation '+Math.max(PL[0]?PL[0].ms||0:0,PL[1]?PL[1].ms||0:0)+' ms'+(qual?' · qualité '+qual:''))}
+function status(){dbg('A:'+(PL[0]?fl(PL[0]):'-')+'  B:'+(PL[1]?fl(PL[1]):'-')+'  · préparation '+Math.max(PL[0]?PL[0].ms||0:0,PL[1]?PL[1].ms||0:0)+' ms'+(qual?'\n'+qual:''))}
 const fl=p=>(p.frame<0?'–':p.frame===0?'vue':p.frame===11?'recto':'s'+p.frame)+(p.ok?' ✓':' …');
 let qual='';
 async function makePlayer(id,z){
@@ -300,13 +300,19 @@ async function makePlayer(id,z){
   p.on(p.Events.Seeked,()=>{const w=pl.w;pl.w=[];w.forEach(fn=>fn())});
   p.on(p.Events.Error,e=>dbg('Erreur lecteur '+id+' : '+JSON.stringify((e&&e.data)||e)));
   pl.ready=new Promise(res=>{p.once(p.Events.Loaded,res);setTimeout(res,9000)});
-  pl.ready.then(async()=>{try{const q=await p.getVideoQualityList();if(q&&q.length){const num=x=>parseInt(String(x&&x.id!=null?x.id:x).replace(/\D/g,''))||0;const best=q.slice().sort((a,b)=>num(b)-num(a))[0];await p.setVideoQuality(best);qual=String(best&&best.id!=null?best.id:best)}}catch(_){}});
+  pl.ready.then(async()=>{try{
+    const q=await p.getVideoQualityList(); const num=x=>parseInt(String(x&&x.id!=null?x.id:x).replace(/\D/g,''))||0;
+    const best=(q||[]).slice().sort((a,b)=>num(b)-num(a))[0];
+    if(best!=null)await p.setVideoQuality(best);
+    await sleep(2500); const now=await p.getVideoQuality();
+    qual='liste '+JSON.stringify(q)+' · choisie '+JSON.stringify(best)+' · actuelle '+JSON.stringify(now); status()
+  }catch(e){qual='qualité ? '+e}});
   return pl;
 }
 function ensurePlayers(){
   if(playersP)return playersP;
   playersP=(async()=>{
-    const [a,b]=await Promise.all([makePlayer('pA',2),makePlayer('pB',1)]); PL.push(a,b); vis=0;
+    const [a,b]=await Promise.all([makePlayer('pA',1),makePlayer('pB',2)]); b.el.style.opacity='.01'; PL.push(a,b); vis=0;
     await prepare(a,0); curFrame=0;
     $('ldg').classList.add('off'); setTimeout(()=>$('ldg').hidden=true,400);
     preloadNext();
@@ -317,20 +323,22 @@ function predict(){const f=curFrame; if(f<=0||f>=11)return 1; return lastDir>=0?
 function preloadNext(){const sp=PL[1-vis]; if(!sp)return; const p=predict(); if(sp.frame!==p)prepare(sp,p)}
 async function showFrame(frame){
   if(!PL.length){curFrame=frame;return}
-  const my=++swapTok; curFrame=frame; const cur=PL[vis], sp=PL[1-vis];
-  if(cur.frame===frame&&cur.ok)return;
+  const my=++swapTok; curFrame=frame;
+  if(PL[vis].frame===frame&&PL[vis].ok)return;
   const w=busyUntil-performance.now(); if(w>0)await sleep(w+20);
   if(my!==swapTok)return;
-  const cur2=PL[vis], sp2=PL[1-vis];
-  if(cur2.frame===frame&&cur2.ok){return}
-  const pr=sp2.frame===frame?sp2.chain:prepare(sp2,frame);
-  await pr;
-  if(my!==swapTok||sp2.frame!==frame)return;
-  /* révélation : le lecteur du dessus s'efface en .5 s (comme les calques de l'appli) et laisse apparaître l'autre en dessous */
+  if(PL[vis].frame===frame&&PL[vis].ok)return;
+  const sp=PL[1-vis];
+  await (sp.frame===frame?sp.chain:prepare(sp,frame));
+  if(my!==swapTok||sp.frame!==frame)return;
+  /* révélation : le lecteur du dessus (déjà prêt, quasi transparent) apparaît en .5 s par-dessus l'autre, comme les calques de l'appli */
   const out=PL[vis], inc=PL[1-vis];
-  out.el.style.transition=reduce?'none':'opacity .5s ease'; out.el.style.opacity=0; vis=1-vis;
+  inc.el.style.transition=reduce?'none':'opacity .5s ease'; inc.el.style.opacity=1; vis=1-vis;
   busyUntil=performance.now()+(reduce?30:560);
-  clearTimeout(rvTimer); rvTimer=setTimeout(()=>{out.el.style.transition='none';out.el.style.opacity=1;out.el.style.zIndex=1;inc.el.style.zIndex=2;preloadNext();status()},reduce?30:560);
+  clearTimeout(rvTimer); rvTimer=setTimeout(()=>{
+    out.el.style.transition='none'; out.el.style.zIndex=2; out.el.style.opacity='.01';
+    inc.el.style.transition='none'; inc.el.style.zIndex=1;
+    preloadNext(); status()},reduce?30:560);
 }
 
 /* ---------- Fiche (reprise de l'appli) ---------- */
@@ -504,7 +512,7 @@ addEventListener('keydown',e=>{
   else if(k==='ArrowLeft'){e.preventDefault();if(!overview)go(idx-1)}
   else if(k==='o'||k==='O'||k==='Escape'){e.preventDefault();setOverview(true)}
 });
-if(!VID||VID==='kZJnZPiTAPrwvAgMwznDJE')dbg('Ajoute ?v=<lien Kinescope de la nouvelle vidéo> à l’adresse');
+if(!VID||VID==='REMPLACER')dbg('Ajoute ?v=<lien Kinescope de la nouvelle vidéo> à l’adresse');
 
 </script>
 </body>
