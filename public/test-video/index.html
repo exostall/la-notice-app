@@ -253,7 +253,7 @@ const NS='http://www.w3.org/2000/svg';
 const F={"label": "Fiche 33", "title": "Préparation d'un onlay", "size": [1000, 1414.05], "steps": [{"r": [17.14, 34.04, 431.19, 245.59], "t": "Occlusion", "sec": "Préparation d'un onlay"}, {"r": [430.22, 16.16, 1000.0, 287.95], "t": "Dépose et éviction carieuse", "sec": "Préparation d'un onlay"}, {"r": [11.51, 250.98, 1000.0, 564.89], "t": "Dentine infectée : révéler et éliminer", "sec": "Préparation d'un onlay"}, {"r": [0.0, 538.93, 983.1, 831.54], "t": "1 · Parois résiduelles ≥ 2 mm", "sec": "Impératifs de préparation"}, {"r": [0.0, 815.62, 1000.0, 1016.41], "t": "2 · Réduction tissulaire selon le matériau", "sec": "Impératifs de préparation"}, {"r": [16.41, 1016.41, 211.56, 1186.58], "t": "3 · Angles internes arrondis", "sec": "Impératifs de préparation"}, {"r": [218.9, 988.49, 566.6, 1188.54], "t": "4 · Angles cavo-superficiels nets", "sec": "Impératifs de préparation"}, {"r": [559.5, 922.87, 783.3, 1198.82], "t": "5 · Pas d'impact occlusal au niveau du joint", "sec": "Impératifs de préparation"}, {"r": [786.97, 999.27, 973.31, 1379.53], "t": "6 · Dépouille marquée", "sec": "Impératifs de préparation"}, {"r": [0.0, 1196.13, 1000.0, 1403.28], "t": "7 · Limite(s) de finition et point(s) de contact", "sec": "Impératifs de préparation"}]};
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* identifiant Kinescope de la vidéo : ?v=<lien ou identifiant> ou valeur par défaut */
-const VID=(()=>{let v=new URLSearchParams(location.search).get('v')||'REMPLACER';v=v.trim().replace(/[?#].*$/,'').split('/').filter(Boolean).pop()||'';return v})();
+const VID=(()=>{let v=new URLSearchParams(location.search).get('v')||'kZJnZPiTAPrwvAgMwznDJE';v=v.trim().replace(/[?#].*$/,'').split('/').filter(Boolean).pop()||'';return v})();
 const KURL='https://kinescope.io/'+VID;
 const dbgEl=$('dbg'); const dbg=t=>{dbgEl.textContent=t};
 
@@ -504,7 +504,7 @@ addEventListener('keydown',e=>{
   else if(k==='ArrowLeft'){e.preventDefault();if(!overview)go(idx-1)}
   else if(k==='o'||k==='O'||k==='Escape'){e.preventDefault();setOverview(true)}
 });
-if(!VID||VID==='REMPLACER')dbg('Ajoute ?v=<lien Kinescope de la nouvelle vidéo> à l’adresse');
+if(!VID||VID==='kZJnZPiTAPrwvAgMwznDJE')dbg('Ajoute ?v=<lien Kinescope de la nouvelle vidéo> à l’adresse');
 
 </script>
 </body>
