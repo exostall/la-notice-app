@@ -534,7 +534,9 @@ window.onKinescopeIframeAPIReady=function(f){
     P=p;
     p.on(p.Events.Seeked,()=>{const w=seekWaiters;seekWaiters=[];w.forEach(r=>r())});
     p.on(p.Events.Error,e=>{$('vstat').textContent='Erreur lecteur : '+JSON.stringify(e&&e.data||e)});
-    p.once(p.Events.Loaded,()=>{ready=true;$('vstat').textContent='Lecteur Kinescope prêt'});
+    const ok=()=>{if(!ready){ready=true;$('vstat').textContent='Lecteur Kinescope prêt'}};
+    ['Loaded','Ready','LoadedMetadata','DurationChange','Playing','Seeked','TimeUpdate'].forEach(k=>{try{if(p.Events[k])p.once(p.Events[k],ok)}catch(_){}});
+    setTimeout(ok,2500);   /* ne jamais bloquer l'affichage si l'événement « prêt » a été manqué */
     setTimeout(()=>{ if(!ready) $('vstat').textContent='Lecteur en attente…' },4000);
   }).catch(e=>{$('vstat').textContent='Lecteur indisponible : '+e});
 };
@@ -575,7 +577,7 @@ function placeBack(){
 
 /* ---------- affichage d'une image de la vidéo ---------- */
 async function seek(t){
-  for(let i=0;i<100&&!(P&&ready);i++){ if(i===5)$('vstat').textContent='Chargement du lecteur…'; await sleep(100) }
+  for(let i=0;i<40&&!(P&&ready);i++){ if(i===5)$('vstat').textContent='Chargement du lecteur…'; await sleep(100) }
   if(!P)return;
   await new Promise(res=>{ seekWaiters.push(res); setTimeout(res,2500); P.seekTo(t).catch(()=>{}) });
   try{ await P.play(); await sleep(70); await P.pause() }catch(_){}   /* une image dure 1 s : 70 ms ne la quittent pas */
