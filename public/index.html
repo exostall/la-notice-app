@@ -194,6 +194,42 @@ body.veil .veilmsg{display:grid}
 #install ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.45}
 #install .out{align-self:flex-start;border:0;background:none;color:var(--muted);text-decoration:underline;font-size:13px;padding:4px 0}
 #install .ok{color:var(--fg);font-weight:600}
+
+/* questions : assistant rattaché à la fiche + écran des auteurs */
+textarea{-webkit-user-select:text;user-select:text;font:inherit;color:var(--fg)}
+.ask{max-width:560px!important;height:min(86vh,680px);padding:16px 16px 12px!important}
+.ask h2{font-size:17px}
+.ask .note{font-size:12.5px;color:var(--muted)}
+.ask .log{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:2px}
+.ask .bub{max-width:88%;border-radius:14px;padding:9px 12px;font-size:14px;line-height:1.42;-webkit-user-select:none;user-select:none}
+.ask .bub p{margin:0;white-space:pre-wrap}
+.ask .bub small{display:block;margin-top:6px;font-size:11.5px;color:var(--muted)}
+.ask .bub.me{align-self:flex-end;background:var(--accent);color:var(--accent-fg)}
+.ask .bub.bot{align-self:flex-start;background:rgba(127,127,127,.12)}
+.ask .rate{display:flex;gap:6px;margin-top:6px}
+.ask .rate button{height:30px;min-width:38px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:14px}
+.ask .rate button.on{border-color:var(--accent);background:rgba(29,111,181,.15)}
+.ask .mine{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px;max-height:28%;overflow:auto}
+.ask .mine b{font-size:12.5px}
+.ask .mine .m{font-size:13px;background:rgba(46,160,67,.12);border-radius:10px;padding:8px 10px}
+.ask .mine .m small{display:block;color:var(--muted);font-size:11.5px;margin-bottom:2px}
+.ask form{display:flex;gap:8px;align-items:flex-end}
+.ask textarea{flex:1;min-height:44px;max-height:110px;resize:none;border-radius:12px;border:1px solid var(--line);padding:10px 12px;font-size:15px;background:var(--bg,#fff)}
+.ask .go{width:auto!important;padding:0 16px;height:44px!important}
+.ask .cl,.qadm .cl{align-self:flex-end;height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:600}
+.qadm{max-width:640px!important;max-height:88vh;overflow:auto}
+.qadm .tabs{display:flex;gap:6px}
+.qadm .tabs button{height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:13px}
+.qadm .tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.qadm .q{border-top:1px solid var(--line);padding:10px 0;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.qadm .q small{color:var(--muted);font-size:12px}
+.qadm .q details{font-size:12.5px;color:var(--muted)}
+.qadm .q details p{margin:4px 0 0;white-space:pre-wrap}
+.qadm input[type=text],.qadm textarea{width:100%;border-radius:10px;border:1px solid var(--line);padding:8px 10px;font-size:14px;background:var(--bg,#fff);height:auto}
+.qadm textarea{min-height:84px;resize:vertical}
+.qadm .acts{display:flex;gap:8px;justify-content:flex-end}
+.qadm .acts button{height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:13px}
+.qadm .acts .ok{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 </style>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#1D6FB5">
@@ -245,7 +281,7 @@ body.veil .veilmsg{display:grid}
 <section class="view" id="home" hidden aria-label="Accueil">
   <div class="brand">
     <h1>La Notice</h1>
-    <div class="who"><span id="whoName"></span><button type="button" id="admBtn" hidden>Invitations</button><button type="button" id="logout">Se déconnecter</button></div>
+    <div class="who"><span id="whoName"></span><button type="button" id="qBtn" hidden>Questions</button><button type="button" id="admBtn" hidden>Invitations</button><button type="button" id="logout">Se déconnecter</button></div>
   </div>
   <div id="groups"></div>
   <div class="foot"><a href="#cgu">Conditions d'utilisation</a><span>© La Notice · Léa Massé &amp; Florian Saysset</span></div>
@@ -285,6 +321,29 @@ body.veil .veilmsg{display:grid}
     <button class="cl" id="admClose" type="button">Fermer</button>
   </div>
 </div>
+<div class="modal" id="ask" hidden>
+  <div class="box ask" role="dialog" aria-modal="true" aria-labelledby="askT">
+    <h2 id="askT">Une question sur cette fiche ?</h2>
+    <p class="note" id="askStep"></p>
+    <p class="note">Ne saisissez aucune donnée de patient. Les questions sont lues par Léa et Florian, qui complètent les réponses.</p>
+    <div class="log" id="askLog" aria-live="polite"></div>
+    <div class="mine" id="askMine" hidden></div>
+    <form id="askForm">
+      <textarea id="askIn" rows="1" maxlength="600" placeholder="Votre question…" aria-label="Votre question"></textarea>
+      <button class="go" id="askGo" type="submit">Envoyer</button>
+    </form>
+    <button class="cl" id="askClose" type="button">Fermer</button>
+  </div>
+</div>
+<div class="modal" id="qadm" hidden>
+  <div class="box qadm" role="dialog" aria-modal="true" aria-labelledby="qadmT">
+    <h2 id="qadmT">Questions des dentistes</h2>
+    <p>Corrigez la réponse si besoin puis validez : elle sera réutilisée en priorité pour les prochaines questions de la même fiche. Reformulez la question pour qu’elle ne contienne aucune information personnelle.</p>
+    <div class="tabs"><button type="button" id="qTabA" aria-pressed="true">À traiter</button><button type="button" id="qTabB" aria-pressed="false">Traitées</button></div>
+    <div id="qList"></div>
+    <button class="cl" id="qadmClose" type="button">Fermer</button>
+  </div>
+</div>
 <div class="modal" id="gate" hidden>
   <div class="box" role="dialog" aria-modal="true" aria-labelledby="gateT">
     <h2 id="gateT">Contenu protégé</h2>
@@ -309,6 +368,7 @@ body.veil .veilmsg{display:grid}
     <button class="pill" id="ovBtn" type="button" aria-pressed="false">Vue d'ensemble</button>
     <a class="pill" id="b3d" href="#" target="_blank" rel="noopener" hidden>3D</a>
     <button class="pill" id="whyBtn" type="button" aria-pressed="false">Le pourquoi</button>
+    <button class="pill" id="askBtn" type="button">Question</button>
   </div>
   <div class="stage" id="stage">
     <div class="sheet" id="sheet">
@@ -1453,7 +1513,89 @@ $('admNew').onclick=async()=>{
 };
 $('admCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('admUrl').textContent);$('admCopy').textContent='Copié'}catch(_){}};
 
+/* questions : discussion avec l'assistant, rattachée à la fiche ouverte */
+let chat=[], askBusy=false;
+const SRC={validee:'Réponse validée par les auteurs',auto:'Réponse automatique, pas encore validée par les auteurs',transmise:'Question transmise à Léa et Florian'};
+function bubble(role,text,src,id){
+  const d=document.createElement('div'); d.className='bub '+role;
+  const p=document.createElement('p'); p.textContent=text; d.append(p);
+  if(src){const s=document.createElement('small'); s.textContent=SRC[src]||''; d.append(s)}
+  if(role==='bot'&&id){
+    const r=document.createElement('div'); r.className='rate';
+    [['👍',true,'Utile'],['👎',false,'Pas utile']].forEach(([l,v,a])=>{
+      const b=document.createElement('button'); b.type='button'; b.textContent=l; b.setAttribute('aria-label',a);
+      b.onclick=async()=>{r.querySelectorAll('button').forEach(x=>x.disabled=true); b.classList.add('on'); await sb.rpc('rate_question',{p_id:id,p_helpful:v})};
+      r.append(b)});
+    d.append(r);
+  }
+  $('askLog').append(d); $('askLog').scrollTop=1e6; return d;
+}
+/* les réponses de Léa et Florian aux questions déjà posées sur cette fiche */
+async function askMine(){
+  const L=$('askMine'); L.textContent=''; L.hidden=true; if(!F)return;
+  const {data}=await sb.from('questions').select('question,validated_answer').eq('fiche',F.id).not('validated_answer','is',null).order('validated_at',{ascending:false}).limit(5);
+  if(!data||!data.length)return;
+  const h=document.createElement('b'); h.textContent='Réponses de Léa et Florian à vos questions'; L.append(h);
+  data.forEach(i=>{const m=document.createElement('div'); m.className='m'; const s=document.createElement('small'); s.textContent=i.question; const t=document.createElement('div'); t.textContent=i.validated_answer; m.append(s,t); L.append(m)});
+  L.hidden=false;
+}
+const curStep=()=>(F&&!overview&&F.steps[idx])?F.steps[idx].t:'';
+$('askBtn').onclick=()=>{
+  if(!F)return; chat=[]; $('askLog').textContent='';
+  $('askT').textContent='Une question sur la fiche '+F.id+' ?';
+  $('askStep').textContent=F.title+(curStep()?' · '+curStep():'');
+  $('ask').hidden=false; askMine(); setTimeout(()=>$('askIn').focus(),60);
+};
+$('askClose').onclick=()=>{$('ask').hidden=true};
+$('askIn').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('askForm').requestSubmit()}});
+$('askForm').addEventListener('submit',async e=>{
+  e.preventDefault(); const q=$('askIn').value.trim(); if(askBusy||q.length<3||!F)return;
+  askBusy=true; $('askGo').disabled=true; $('askIn').value=''; bubble('me',q); const wait=bubble('bot','…');
+  const t=await token(); let d;
+  try{
+    const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},
+      body:JSON.stringify({fiche:F.id,step:curStep(),question:q,history:chat,device:deviceId()})});
+    d=await r.json();
+  }catch(_){d={ok:false,reason:'server'}}
+  wait.remove(); askBusy=false; $('askGo').disabled=false;
+  if(d.ok){chat.push({role:'user',content:q},{role:'assistant',content:d.answer}); bubble('bot',d.answer,d.source,d.id)}
+  else if(d.reason==='limit')bubble('bot','Vous avez posé beaucoup de questions. Réessayez un peu plus tard.');
+  else if(d.reason==='server'||d.reason==='bad_request')bubble('bot','Service momentanément indisponible. Réessayez dans un instant.');
+  else if(d.reason==='cgu'){$('ask').hidden=true;accepted=false;gate()}
+  else {$('ask').hidden=true;kick(d.reason)}
+});
+/* administration : répondre aux questions */
+let qTab='a_traiter';
+async function qLoad(){
+  $('qTabA').setAttribute('aria-pressed',qTab==='a_traiter'); $('qTabB').setAttribute('aria-pressed',qTab==='repondu');
+  const {data:r}=await sb.rpc('admin_list_questions',{p_status:qTab}); const L=$('qList'); L.textContent='';
+  if(!r||!r.ok){L.textContent='Liste indisponible.';return}
+  if(!r.items.length){L.textContent=qTab==='a_traiter'?'Aucune question à traiter.':'Rien ici pour l’instant.';return}
+  r.items.forEach(i=>{
+    const d=document.createElement('div'); d.className='q';
+    const h=document.createElement('small'); h.textContent='Fiche '+i.fiche+(i.step?' · '+i.step:'')+' · '+i.who+' · '+new Date(i.created_at).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})+(i.helpful===false?' · 👎':i.helpful===true?' · 👍':'')+' · '+(SRC[i.answer_source]||'');
+    const q=document.createElement('b'); q.textContent=i.question;
+    d.append(h,q);
+    if(i.answer){const dt=document.createElement('details'); const sm=document.createElement('summary'); sm.textContent='Réponse donnée par l’assistant'; const p=document.createElement('p'); p.textContent=i.answer; dt.append(sm,p); d.append(dt)}
+    const qi=document.createElement('input'); qi.type='text'; qi.maxLength=600; qi.value=i.validated_question||i.question; qi.setAttribute('aria-label','Question reformulée, sans information personnelle');
+    const ta=document.createElement('textarea'); ta.maxLength=4000; ta.placeholder='Réponse validée (affichée au dentiste et réutilisée pour les prochaines questions)';
+    ta.value=i.validated_answer||(i.answer_source==='transmise'?'':(i.answer||''));
+    const a=document.createElement('div'); a.className='acts';
+    const ig=document.createElement('button'); ig.type='button'; ig.textContent='Ignorer';
+    const ok=document.createElement('button'); ok.type='button'; ok.className='ok'; ok.textContent='Valider';
+    const send=async st=>{ if(st==='repondu'&&!ta.value.trim()){ta.focus();return} a.querySelectorAll('button').forEach(x=>x.disabled=true);
+      await sb.rpc('admin_answer_question',{p_id:i.id,p_question:qi.value,p_answer:ta.value,p_status:st}); qLoad()};
+    ok.onclick=()=>send('repondu'); ig.onclick=()=>send('ignore');
+    a.append(ig,ok); d.append(qi,ta,a); L.append(d);
+  });
+}
+$('qBtn').onclick=()=>{$('qadm').hidden=false;qTab='a_traiter';qLoad()};
+$('qadmClose').onclick=()=>{$('qadm').hidden=true};
+$('qTabA').onclick=()=>{qTab='a_traiter';qLoad()}; $('qTabB').onclick=()=>{qTab='repondu';qLoad()};
+
 function route(){
+  if(!/^#fiche-/.test(location.hash))$('ask').hidden=true;
+  $('qBtn').hidden=!(ME&&ME.admin);
   $('admBtn').hidden=!(ME&&ME.admin);
   const it=INV();
   if(it){ if(ME){location.hash='';return} return showInvite(it) }

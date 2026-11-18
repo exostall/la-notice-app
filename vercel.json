@@ -7,6 +7,10 @@
     "api/open.js": {
       "includeFiles": "tiles/manifest.json",
       "memory": 256
+    },
+    "api/ask.js": {
+      "maxDuration": 30,
+      "memory": 256
     }
   },
   "headers": [
