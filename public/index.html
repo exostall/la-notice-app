@@ -195,28 +195,106 @@ body.veil .veilmsg{display:grid}
 #install .out{align-self:flex-start;border:0;background:none;color:var(--muted);text-decoration:underline;font-size:13px;padding:4px 0}
 #install .ok{color:var(--fg);font-weight:600}
 
-/* questions : assistant rattaché à la fiche + écran des auteurs */
+/* questions : messagerie rattachée à la fiche (barre flottante + panneau, façon Fin) */
 textarea{-webkit-user-select:text;user-select:text;font:inherit;color:var(--fg)}
-.ask{max-width:560px!important;height:min(86vh,680px);padding:16px 16px 12px!important}
-.ask h2{font-size:17px}
-.ask .note{font-size:12.5px;color:var(--muted)}
-.ask .log{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:2px}
-.ask .bub{max-width:88%;border-radius:14px;padding:9px 12px;font-size:14px;line-height:1.42;-webkit-user-select:none;user-select:none}
-.ask .bub p{margin:0;white-space:pre-wrap}
-.ask .bub small{display:block;margin-top:6px;font-size:11.5px;color:var(--muted)}
-.ask .bub.me{align-self:flex-end;background:var(--accent);color:var(--accent-fg)}
-.ask .bub.bot{align-self:flex-start;background:rgba(127,127,127,.12)}
-.ask .rate{display:flex;gap:6px;margin-top:6px}
-.ask .rate button{height:30px;min-width:38px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:14px}
-.ask .rate button.on{border-color:var(--accent);background:rgba(29,111,181,.15)}
-.ask .mine{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px;max-height:28%;overflow:auto}
-.ask .mine b{font-size:12.5px}
-.ask .mine .m{font-size:13px;background:rgba(46,160,67,.12);border-radius:10px;padding:8px 10px}
-.ask .mine .m small{display:block;color:var(--muted);font-size:11.5px;margin-bottom:2px}
-.ask form{display:flex;gap:8px;align-items:flex-end}
-.ask textarea{flex:1;min-height:44px;max-height:110px;resize:none;border-radius:12px;border:1px solid var(--line);padding:10px 12px;font-size:15px;background:var(--bg,#fff)}
-.ask .go{width:auto!important;padding:0 16px;height:44px!important}
-.ask .cl,.qadm .cl{align-self:flex-end;height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:600}
+.icb{flex:none;width:34px;height:34px;border-radius:50%;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;transition:background .15s,color .15s}
+.icb:hover{background:rgba(127,127,127,.16);color:var(--fg)}
+.icb:disabled{cursor:default;opacity:.55}
+.icb.on{background:rgba(29,111,181,.16);color:var(--accent);opacity:1}
+.icb svg{width:18px;height:18px}
+.askav{flex:none;width:32px;height:32px;border-radius:50%;border:0;padding:0;background:var(--fg);color:var(--bg);display:grid;place-items:center;font-size:10px;font-weight:700;letter-spacing:.02em}
+.askav svg{width:17px;height:17px}
+.askav.sm{width:18px;height:18px;font-size:8px}
+.askav.sm svg{width:11px;height:11px}
+.askav.hu{background:#2f8f4e;color:#fff}
+.askav.big{width:38px;height:38px}
+.askav.big svg{width:20px;height:20px}
+.asksend{flex:none;width:34px;height:34px;border-radius:50%;border:0;background:rgba(127,127,127,.22);color:var(--muted);display:grid;place-items:center;transition:background .2s,color .2s,transform .15s}
+.asksend svg{width:18px;height:18px}
+.asksend.on{background:var(--fg);color:var(--bg)}
+.asksend.on:active{transform:scale(.92)}
+
+/* barre flottante : pastille, puis barre large avec questions suggérées quand on la touche */
+.askbar{position:fixed;z-index:30;left:max(14px,env(safe-area-inset-left));bottom:calc(max(12px,env(safe-area-inset-bottom)) + 98px);
+  width:min(258px,calc(100vw - 28px));transition:width .3s cubic-bezier(.3,.7,.2,1)}
+.askbar:focus-within{width:min(580px,calc(100vw - 28px))}
+body.askopen .askbar{display:none}
+.askpill{position:relative;display:flex;align-items:center;gap:8px;height:52px;padding:0 9px;border-radius:26px;background:var(--surface);
+  border:1px solid var(--line);box-shadow:0 8px 26px rgba(20,35,47,.2);margin:0}
+.askfield{position:relative;flex:1;min-width:0;height:100%}
+.askfield input{width:100%;height:100%;border:0;background:transparent;font:inherit;font-size:16px;color:var(--fg);outline:0;padding:0;
+  -webkit-user-select:text;user-select:text}
+.askfield input::placeholder{color:transparent}
+.askbar:focus-within .askfield input::placeholder{color:var(--muted)}
+.askph{position:absolute;inset:0;display:flex;align-items:center;color:var(--muted);font-size:14.5px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;pointer-events:none;transition:opacity .35s}
+.askph.out{opacity:0}
+.askbar:focus-within .askph{display:none}
+.askchips{position:absolute;left:0;bottom:calc(100% + 10px);display:flex;flex-direction:column;align-items:flex-start;gap:8px;max-width:100%;pointer-events:none}
+.askchip{max-width:100%;border:0;border-radius:21px;padding:10px 16px;background:rgba(20,35,47,.8);color:#fff;font-size:14.5px;line-height:1.3;text-align:left;
+  opacity:0;transform:translateY(10px);transition:opacity .22s ease,transform .22s ease,background .15s;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.askchip:nth-child(2){transition-delay:.04s}.askchip:nth-child(3){transition-delay:.08s}
+.askbar:focus-within .askchip{opacity:1;transform:none;pointer-events:auto}
+.askchip:hover{background:rgba(20,35,47,.92)}
+.asknote{position:absolute;left:14px;top:calc(100% + 6px);margin:0;font-size:11.5px;color:var(--muted);white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none}
+.askbar:focus-within .asknote{opacity:1}
+@media (prefers-color-scheme: dark){.askchip{background:rgba(230,238,244,.22)}.askchip:hover{background:rgba(230,238,244,.32)}}
+@media (max-height:520px){.askbar{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 6px);width:min(220px,calc(100vw - 28px))}.askpill{height:46px}}
+
+/* panneau de conversation */
+.fin{position:fixed;z-index:50;right:max(20px,env(safe-area-inset-right));bottom:max(20px,env(safe-area-inset-bottom));width:min(404px,calc(100vw - 24px));
+  height:min(668px,calc(100vh - 40px));height:min(668px,calc(100dvh - 40px));display:flex;flex-direction:column;background:var(--surface);color:var(--fg);
+  border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 54px rgba(14,22,29,.3);overflow:hidden;animation:finIn .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes finIn{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes finUp{from{opacity:0;transform:translateY(48px)}to{opacity:1;transform:none}}
+@media (max-width:560px){.fin{inset:0;width:auto;height:auto;border:0;border-radius:0;animation-name:finUp}}
+.finh{flex:none;display:flex;align-items:center;gap:8px;padding:max(10px,env(safe-area-inset-top)) 10px 10px 6px;
+  background:linear-gradient(180deg,rgba(29,111,181,.2),rgba(29,111,181,.04) 80%,rgba(29,111,181,0));border-bottom:1px solid var(--line)}
+.fint{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.fint b{font-size:15px}
+.fint span{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.finctx{flex:none;margin:10px 14px 0;align-self:flex-start;max-width:calc(100% - 28px);font-size:12px;color:var(--muted);background:rgba(127,127,127,.12);
+  border-radius:12px;padding:4px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.finbody{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px 14px 8px;display:flex;flex-direction:column;gap:14px}
+.welcome{display:flex;flex-direction:column;gap:6px;animation:msgIn .3s ease both}
+.welcome b{font-size:20px;letter-spacing:-.01em;font-weight:600}
+.welcome p{margin:0 0 6px;font-size:14px;color:var(--muted);line-height:1.45}
+.fchips{display:flex;flex-direction:column;align-items:flex-start;gap:7px;animation:msgIn .3s ease both}
+.fchip{max-width:100%;border:1px solid var(--line);background:var(--surface);border-radius:17px;padding:9px 14px;font-size:13.5px;text-align:left;line-height:1.3;transition:border-color .15s,background .15s}
+.fchip:hover{border-color:var(--accent);background:rgba(29,111,181,.07)}
+.msg{display:flex;flex-direction:column;gap:5px;max-width:90%;animation:msgIn .26s ease both}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.msg.me{align-self:flex-end;align-items:flex-end}
+.msg.bot{align-self:flex-start;align-items:flex-start}
+.who2{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--muted)}
+.bub2{padding:11px 15px;border-radius:19px;font-size:14.5px;line-height:1.48;white-space:pre-wrap;-webkit-user-select:none;user-select:none;word-break:break-word}
+.msg.bot .bub2{background:linear-gradient(135deg,rgba(29,111,181,.11),rgba(127,127,127,.1));border-top-left-radius:6px}
+.msg.me .bub2{background:var(--fg);color:var(--surface);border-bottom-right-radius:6px}
+.typing{display:inline-flex;gap:5px;align-items:center;height:18px}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:dot 1.1s infinite ease-in-out}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.srcrow{display:flex;flex-wrap:wrap;gap:6px;animation:msgIn .25s ease both}
+.srcchip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;line-height:1.2;padding:4px 9px;border-radius:12px;border:1px solid var(--line);color:var(--muted);max-width:100%}
+.srcchip .ic svg{width:12px;height:12px;display:block}
+.srcchip.ok{color:#1f7a3a;border-color:rgba(46,160,67,.45);background:rgba(46,160,67,.09)}
+@media (prefers-color-scheme: dark){.srcchip.ok{color:#6fd08c}}
+.acts2{display:flex;align-items:center;gap:2px;margin-left:-6px;animation:msgIn .25s ease both}
+.handoff{height:36px;padding:0 15px;border-radius:18px;border:1px solid var(--fg);background:transparent;font-weight:600;font-size:13px;animation:msgIn .25s ease both}
+.handoff:hover{background:var(--fg);color:var(--surface)}
+.handoff:disabled{opacity:.5;background:transparent;color:inherit;cursor:default}
+.sysnote{align-self:center;text-align:center;font-size:12px;color:var(--muted);background:rgba(127,127,127,.1);border-radius:12px;padding:6px 12px;animation:msgIn .25s ease both}
+.finmine{border:1px solid rgba(46,160,67,.4);background:rgba(46,160,67,.08);border-radius:15px;padding:9px 13px;font-size:13px;animation:msgIn .3s ease both}
+.finmine summary{cursor:pointer;font-weight:600;font-size:12.5px}
+.finmine .m{margin-top:9px;padding-top:8px;border-top:1px solid rgba(46,160,67,.25);-webkit-user-select:none;user-select:none}
+.finmine .m small{display:block;color:var(--muted);font-size:11.5px;margin-bottom:2px}
+.finc{flex:none;padding:6px 12px calc(10px + env(safe-area-inset-bottom))}
+.finform{display:flex;align-items:flex-end;gap:8px;border:1px solid var(--line);border-radius:25px;padding:7px 7px 7px 17px;background:var(--surface);transition:border-color .15s,box-shadow .15s;margin:0}
+.finform:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(29,111,181,.14)}
+.finform textarea{flex:1;min-width:0;border:0;outline:0;resize:none;background:transparent;font-size:16px;line-height:1.35;padding:6px 0;min-height:30px;max-height:110px}
+.finnote{margin:7px 6px 0;font-size:11.5px;color:var(--muted);text-align:center;line-height:1.35}
+@media (prefers-reduced-motion:reduce){.fin,.msg,.welcome,.fchips,.srcrow,.acts2,.handoff,.sysnote,.finmine,.typing i{animation:none}.askbar,.askchip,.askph{transition:none}}
+.qadm .cl{align-self:flex-end;height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:600}
 .qadm{max-width:640px!important;max-height:88vh;overflow:auto}
 .qadm .tabs{display:flex;gap:6px}
 .qadm .tabs button{height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:13px}
@@ -321,18 +399,21 @@ textarea{-webkit-user-select:text;user-select:text;font:inherit;color:var(--fg)}
     <button class="cl" id="admClose" type="button">Fermer</button>
   </div>
 </div>
-<div class="modal" id="ask" hidden>
-  <div class="box ask" role="dialog" aria-modal="true" aria-labelledby="askT">
-    <h2 id="askT">Une question sur cette fiche ?</h2>
-    <p class="note" id="askStep"></p>
-    <p class="note">Ne saisissez aucune donnée de patient. Les questions sont lues par Léa et Florian, qui complètent les réponses.</p>
-    <div class="log" id="askLog" aria-live="polite"></div>
-    <div class="mine" id="askMine" hidden></div>
-    <form id="askForm">
-      <textarea id="askIn" rows="1" maxlength="600" placeholder="Votre question…" aria-label="Votre question"></textarea>
-      <button class="go" id="askGo" type="submit">Envoyer</button>
+<div class="fin" id="ask" hidden role="dialog" aria-modal="false" aria-labelledby="askT">
+  <div class="finh">
+    <button class="icb" id="askBack" type="button" aria-label="Fermer la conversation" data-ico="back"></button>
+    <span class="askav big" data-ico="chat"></span>
+    <div class="fint"><b id="askT">Assistant La Notice</b><span>Léa et Florian peuvent aussi répondre</span></div>
+    <button class="icb" id="askClose" type="button" aria-label="Réduire" data-ico="down"></button>
+  </div>
+  <div class="finctx" id="askStep"></div>
+  <div class="finbody" id="askLog" aria-live="polite"></div>
+  <div class="finc">
+    <form class="finform" id="askForm">
+      <textarea id="askIn" rows="1" maxlength="600" placeholder="Posez votre question…" aria-label="Votre question" enterkeyhint="send"></textarea>
+      <button class="asksend" id="askGo" type="submit" aria-label="Envoyer" data-ico="up"></button>
     </form>
-    <button class="cl" id="askClose" type="button">Fermer</button>
+    <p class="finnote">Aucune donnée de patient. Les réponses automatiques sont relues par Léa et Florian.</p>
   </div>
 </div>
 <div class="modal" id="qadm" hidden>
@@ -368,7 +449,6 @@ textarea{-webkit-user-select:text;user-select:text;font:inherit;color:var(--fg)}
     <button class="pill" id="ovBtn" type="button" aria-pressed="false">Vue d'ensemble</button>
     <a class="pill" id="b3d" href="#" target="_blank" rel="noopener" hidden>3D</a>
     <button class="pill" id="whyBtn" type="button" aria-pressed="false">Le pourquoi</button>
-    <button class="pill" id="askBtn" type="button">Question</button>
   </div>
   <div class="stage" id="stage">
     <div class="sheet" id="sheet">
@@ -392,6 +472,15 @@ textarea{-webkit-user-select:text;user-select:text;font:inherit;color:var(--fg)}
     <button class="nb next" id="next" type="button">Suivant</button>
   </div>
   <p class="hint" id="hint"></p>
+  <div class="askbar" id="askBar">
+    <div class="askchips" id="askChips"></div>
+    <form class="askpill" id="askBarForm" autocomplete="off">
+      <button class="askav" id="askOpen" type="button" aria-label="Ouvrir la conversation" data-ico="chat"></button>
+      <span class="askfield"><input id="askBarIn" type="text" maxlength="600" placeholder="Posez votre question…" aria-label="Poser une question sur cette fiche" enterkeyhint="send"><span class="askph" id="askPh"></span></span>
+      <button class="asksend" id="askBarGo" type="submit" aria-label="Envoyer" data-ico="up"></button>
+    </form>
+    <p class="asknote">Aucune donnée de patient · réponses relues par Léa et Florian</p>
+  </div>
 </section>
 
 <script>
@@ -1341,6 +1430,8 @@ stage.addEventListener('pointerup',e=>{
 });
 addEventListener('keydown',e=>{
   if($('fiche').hidden||e.altKey||e.ctrlKey||e.metaKey)return;
+  if(e.key==='Escape'&&!$('ask').hidden){e.preventDefault();closeAsk();return}
+  if(e.target&&e.target.closest&&e.target.closest('input,textarea'))return;   /* on tape : les raccourcis ne volent pas les lettres */
   const k=e.key;
   if(k==='ArrowRight'){e.preventDefault();overview?go(0):go(idx+1)}
   else if(k==='ArrowLeft'){e.preventDefault();if(!overview)go(idx-1)}
@@ -1358,7 +1449,7 @@ function drawWatermark(){
   $('wm').style.backgroundImage='url("data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)+'")';
 }
 drawWatermark(); setInterval(drawWatermark,60000);
-['contextmenu','dragstart','selectstart','copy','cut'].forEach(t=>addEventListener(t,e=>{if(!(e.target.closest&&e.target.closest('#cgu .doc')))e.preventDefault()},true));
+['contextmenu','dragstart','selectstart','copy','cut'].forEach(t=>addEventListener(t,e=>{if(!(e.target.closest&&e.target.closest('#cgu .doc, input, textarea')))e.preventDefault()},true));
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();if((e.ctrlKey||e.metaKey)&&(k==='p'||k==='s')){e.preventDefault();e.stopPropagation()}},true);
 addEventListener('beforeprint',()=>document.body.classList.add('veil'));
 addEventListener('afterprint',()=>document.body.classList.remove('veil'));
@@ -1513,57 +1604,142 @@ $('admNew').onclick=async()=>{
 };
 $('admCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('admUrl').textContent);$('admCopy').textContent='Copié'}catch(_){}};
 
-/* questions : discussion avec l'assistant, rattachée à la fiche ouverte */
-let chat=[], askBusy=false;
-const SRC={validee:'Réponse validée par les auteurs',auto:'Réponse automatique, pas encore validée par les auteurs',transmise:'Question transmise à Léa et Florian'};
-function bubble(role,text,src,id){
-  const d=document.createElement('div'); d.className='bub '+role;
-  const p=document.createElement('p'); p.textContent=text; d.append(p);
-  if(src){const s=document.createElement('small'); s.textContent=SRC[src]||''; d.append(s)}
-  if(role==='bot'&&id){
-    const r=document.createElement('div'); r.className='rate';
-    [['👍',true,'Utile'],['👎',false,'Pas utile']].forEach(([l,v,a])=>{
-      const b=document.createElement('button'); b.type='button'; b.textContent=l; b.setAttribute('aria-label',a);
-      b.onclick=async()=>{r.querySelectorAll('button').forEach(x=>x.disabled=true); b.classList.add('on'); await sb.rpc('rate_question',{p_id:id,p_helpful:v})};
-      r.append(b)});
-    d.append(r);
-  }
-  $('askLog').append(d); $('askLog').scrollTop=1e6; return d;
+/* questions : messagerie rattachée à la fiche (barre flottante + panneau, façon Fin) */
+let chat=[], askBusy=false, askFiche='', phI=0;
+const mkSvg=(d,w)=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(w||2)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>';
+const ICO={
+  chat:mkSvg('<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>'),
+  up:mkSvg('<path d="M12 19V5M5 12l7-7 7 7"/>',2.4),
+  back:mkSvg('<path d="M15 5l-7 7 7 7"/>',2.2),
+  down:mkSvg('<path d="M6 9l6 6 6-6"/>',2.2),
+  check:mkSvg('<path d="M5 12.5l4.5 4.5L19 7.5"/>',2.4),
+  doc:mkSvg('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>'),
+  yes:mkSvg('<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/>'),
+  no:mkSvg('<path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/>')
+};
+document.querySelectorAll('[data-ico]').forEach(e=>{e.innerHTML=ICO[e.dataset.ico]});
+const nd=(t,c,x)=>{const e=document.createElement(t); if(c)e.className=c; if(x!=null)e.textContent=x; return e};
+const icoSpan=n=>{const s=nd('span','ic'); s.innerHTML=ICO[n]; return s};
+const curStep=()=>(F&&!overview&&F.steps[idx])?F.steps[idx].t:'';
+const clip=(s,n)=>s.length>n?s.slice(0,n-1)+'…':s;
+const toEnd=()=>{const L=$('askLog'); L.scrollTop=L.scrollHeight};
+
+/* questions suggérées : elles suivent la séquence affichée */
+function suggestions(){
+  const s=curStep();
+  return s?['Explique-moi « '+clip(s,40)+' » simplement','Quelles erreurs fréquentes éviter ici ?','Existe-t-il une alternative à cette étape ?']
+          :['Quand utiliser cette fiche ?','Quelles sont les erreurs fréquentes ?','Résume le protocole en 5 points'];
 }
+function renderChips(){
+  const C=$('askChips'); C.textContent='';
+  suggestions().forEach(t=>{
+    const b=nd('button','askchip',t); b.type='button';
+    b.addEventListener('mousedown',e=>e.preventDefault());      /* garde le focus dans la barre */
+    b.onclick=()=>sendQ(t); C.append(b);
+  });
+}
+function askRefresh(){ if(!F)return; const L=suggestions(); $('askPh').textContent=L[phI%L.length]; renderChips() }
+function phTick(){ const e=$('askPh'); e.classList.add('out'); setTimeout(()=>{phI++; askRefresh(); e.classList.remove('out')},350) }
+setInterval(()=>{ if(!F||$('fiche').hidden||document.hidden||document.activeElement===$('askBarIn'))return; phTick() },3800);
+new MutationObserver(askRefresh).observe($('ttl'),{childList:true,characterData:true,subtree:true});
+
 /* les réponses de Léa et Florian aux questions déjà posées sur cette fiche */
 async function askMine(){
-  const L=$('askMine'); L.textContent=''; L.hidden=true; if(!F)return;
-  const {data}=await sb.from('questions').select('question,validated_answer').eq('fiche',F.id).not('validated_answer','is',null).order('validated_at',{ascending:false}).limit(5);
-  if(!data||!data.length)return;
-  const h=document.createElement('b'); h.textContent='Réponses de Léa et Florian à vos questions'; L.append(h);
-  data.forEach(i=>{const m=document.createElement('div'); m.className='m'; const s=document.createElement('small'); s.textContent=i.question; const t=document.createElement('div'); t.textContent=i.validated_answer; m.append(s,t); L.append(m)});
-  L.hidden=false;
+  if(!F)return; const fid=F.id;
+  const {data}=await sb.from('questions').select('question,validated_answer').eq('fiche',fid).not('validated_answer','is',null).order('validated_at',{ascending:false}).limit(5);
+  if(!data||!data.length||!F||F.id!==fid||$('ask').hidden)return;
+  $('askLog').querySelectorAll('.finmine').forEach(x=>x.remove());
+  const d=nd('details','finmine'); d.append(nd('summary','','Réponses de Léa et Florian à vos questions ('+data.length+')'));
+  data.forEach(i=>{const m=nd('div','m'); m.append(nd('small','',i.question),nd('div','',i.validated_answer)); d.append(m)});
+  const L=$('askLog'), first=L.querySelector('.msg'); first?L.insertBefore(d,first):L.append(d);
 }
-const curStep=()=>(F&&!overview&&F.steps[idx])?F.steps[idx].t:'';
-$('askBtn').onclick=()=>{
-  if(!F)return; chat=[]; $('askLog').textContent='';
-  $('askT').textContent='Une question sur la fiche '+F.id+' ?';
-  $('askStep').textContent=F.title+(curStep()?' · '+curStep():'');
-  $('ask').hidden=false; askMine(); setTimeout(()=>$('askIn').focus(),60);
-};
-$('askClose').onclick=()=>{$('ask').hidden=true};
-$('askIn').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('askForm').requestSubmit()}});
-$('askForm').addEventListener('submit',async e=>{
-  e.preventDefault(); const q=$('askIn').value.trim(); if(askBusy||q.length<3||!F)return;
-  askBusy=true; $('askGo').disabled=true; $('askIn').value=''; bubble('me',q); const wait=bubble('bot','…');
+function welcome(){
+  const w=nd('div','welcome'); w.append(nd('b','','Une question sur cette fiche ?'),nd('p','','Posez-la ici. Si l’assistant ne sait pas, Léa et Florian vous répondent.'));
+  const c=nd('div','fchips');
+  suggestions().forEach(t=>{const b=nd('button','fchip',t); b.type='button'; b.onclick=()=>sendQ(t); c.append(b)});
+  w.append(c); $('askLog').append(w);
+}
+function openAsk(focus){
+  if(!F)return;
+  if(askFiche!==F.id){chat=[]; $('askLog').textContent=''; askFiche=F.id; welcome()}
+  $('askStep').textContent='Fiche '+F.id+' · '+F.title+(curStep()?' · '+curStep():'');
+  if($('ask').hidden){document.body.classList.add('askopen'); $('ask').hidden=false; askMine(); toEnd()}
+  if(focus)setTimeout(()=>$('askIn').focus(),80);
+}
+function closeAsk(){ $('ask').hidden=true; document.body.classList.remove('askopen') }
+
+/* messages */
+function avatar(human){const a=nd('span','askav sm'+(human?' hu':'')); if(human)a.textContent='LF'; else a.innerHTML=ICO.chat; return a}
+function userMsg(q){const m=nd('div','msg me'); m.append(nd('div','bub2',q)); $('askLog').append(m); toEnd()}
+function typing(){
+  const m=nd('div','msg bot'), w=nd('div','who2'), b=nd('div','bub2'), t=nd('span','typing'); t.innerHTML='<i></i><i></i><i></i>';
+  w.append(avatar(false),nd('span','','Assistant')); b.append(t); m.append(w,b); $('askLog').append(m); toEnd(); return m;
+}
+function reveal(el,text,done){
+  if(reduce){el.textContent=text; toEnd(); done(); return}
+  let i=0; const step=Math.max(2,Math.ceil(text.length/80));
+  const t=setInterval(()=>{ i+=step; el.textContent=text.slice(0,i); toEnd(); if(i>=text.length){clearInterval(t); el.textContent=text; done()} },18);
+}
+function sysNote(t){$('askLog').append(nd('div','sysnote',t)); toEnd()}
+function botReply(m,text,src,id,fid,where){
+  const b=m.querySelector('.bub2'); b.textContent='';
+  reveal(b,text,()=>{
+    if(src==='validee'||src==='auto'||src==='transmise'){
+      const row=nd('div','srcrow');
+      if(src!=='transmise'){const c=nd('span','srcchip','Fiche '+fid+' · '+clip(where,34)); c.prepend(icoSpan('doc')); row.append(c)}
+      const s=nd('span','srcchip'+(src==='auto'?'':' ok'),SRC[src]); s.prepend(icoSpan(src==='auto'?'chat':'check')); row.append(s);
+      m.append(row);
+    }
+    if(id&&(src==='validee'||src==='auto')){
+      const acts=nd('div','acts2'); let ho=null;
+      const rate=async(v,btn)=>{acts.querySelectorAll('button').forEach(x=>x.disabled=true); btn.classList.add('on');
+        try{await sb.rpc('rate_question',{p_id:id,p_helpful:v})}catch(_){}
+        if(!v){if(ho)ho.disabled=true; sysNote('Merci. Léa et Florian vont regarder votre question. Leur réponse apparaîtra ici.')}};
+      [['yes',true,'Réponse utile'],['no',false,'Réponse pas utile']].forEach(([ic,v,al])=>{
+        const x=nd('button','icb'); x.type='button'; x.innerHTML=ICO[ic]; x.setAttribute('aria-label',al); x.onclick=()=>rate(v,x); acts.append(x)});
+      m.append(acts);
+      if(src==='auto'){ho=nd('button','handoff','Demander à Léa et Florian'); ho.type='button';
+        ho.onclick=()=>{ho.disabled=true; rate(false,acts.lastChild)}; m.append(ho)}
+      const f=nd('div','fchips');
+      ['Peux-tu détailler ?','Un exemple concret ?'].forEach(t=>{const x=nd('button','fchip',t); x.type='button'; x.onclick=()=>sendQ(t); f.append(x)});
+      $('askLog').append(f);
+    }
+    toEnd();
+  });
+}
+const SRC={validee:'Validée par Léa et Florian',auto:'Réponse automatique, en attente de validation',transmise:'Transmise à Léa et Florian'};
+
+async function sendQ(raw){
+  const q=(raw||'').trim(); if(askBusy||q.length<3||!F)return;
+  openAsk(false); askBusy=true;
+  $('askLog').querySelectorAll('.welcome,.fchips').forEach(x=>x.remove());
+  $('askBarIn').value=''; $('askBarGo').classList.remove('on'); $('askIn').value=''; $('askIn').style.height=''; $('askGo').classList.remove('on');
+  const fid=F.id, where=curStep()||F.title, step=curStep();
+  userMsg(q); const wait=typing();
   const t=await token(); let d;
   try{
     const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},
-      body:JSON.stringify({fiche:F.id,step:curStep(),question:q,history:chat,device:deviceId()})});
+      body:JSON.stringify({fiche:fid,step,question:q,history:chat,device:deviceId()})});
     d=await r.json();
   }catch(_){d={ok:false,reason:'server'}}
-  wait.remove(); askBusy=false; $('askGo').disabled=false;
-  if(d.ok){chat.push({role:'user',content:q},{role:'assistant',content:d.answer}); bubble('bot',d.answer,d.source,d.id)}
-  else if(d.reason==='limit')bubble('bot','Vous avez posé beaucoup de questions. Réessayez un peu plus tard.');
-  else if(d.reason==='server'||d.reason==='bad_request')bubble('bot','Service momentanément indisponible. Réessayez dans un instant.');
-  else if(d.reason==='cgu'){$('ask').hidden=true;accepted=false;gate()}
-  else {$('ask').hidden=true;kick(d.reason)}
-});
+  askBusy=false;
+  if(d.ok){chat.push({role:'user',content:q},{role:'assistant',content:d.answer}); botReply(wait,d.answer,d.source,d.id,fid,where)}
+  else if(d.reason==='limit')botReply(wait,'Vous avez posé beaucoup de questions. Réessayez un peu plus tard.')
+  else if(d.reason==='server'||d.reason==='bad_request')botReply(wait,'Service momentanément indisponible. Réessayez dans un instant.')
+  else if(d.reason==='cgu'){wait.remove(); closeAsk(); accepted=false; gate()}
+  else {wait.remove(); closeAsk(); kick(d.reason)}
+}
+
+/* barre flottante */
+$('askOpen').onclick=()=>openAsk(true);
+$('askBarIn').addEventListener('input',()=>$('askBarGo').classList.toggle('on',$('askBarIn').value.trim().length>=3));
+$('askBarIn').addEventListener('keydown',e=>{if(e.key==='Escape')$('askBarIn').blur()});
+$('askBarForm').addEventListener('submit',e=>{e.preventDefault(); const q=$('askBarIn').value; if(q.trim().length<3)return; $('askBarIn').blur(); sendQ(q)});
+/* panneau */
+$('askClose').onclick=closeAsk; $('askBack').onclick=closeAsk;
+$('askIn').addEventListener('input',()=>{const t=$('askIn'); t.style.height='auto'; t.style.height=Math.min(110,t.scrollHeight)+'px'; $('askGo').classList.toggle('on',t.value.trim().length>=3)});
+$('askIn').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('askForm').requestSubmit()}});
+$('askForm').addEventListener('submit',e=>{e.preventDefault(); sendQ($('askIn').value)});
 /* administration : répondre aux questions */
 let qTab='a_traiter', canAnswer=false;
 async function loadCanAnswer(){
@@ -1599,7 +1775,7 @@ $('qadmClose').onclick=()=>{$('qadm').hidden=true};
 $('qTabA').onclick=()=>{qTab='a_traiter';qLoad()}; $('qTabB').onclick=()=>{qTab='repondu';qLoad()};
 
 function route(){
-  if(!/^#fiche-/.test(location.hash))$('ask').hidden=true;
+  if(!/^#fiche-/.test(location.hash))closeAsk();
   $('qBtn').hidden=!(ME&&(ME.admin||canAnswer));
   $('admBtn').hidden=!(ME&&ME.admin);
   const it=INV();
