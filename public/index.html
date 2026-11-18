@@ -1422,7 +1422,7 @@ async function loadMe(c){
     const {data:p}=await sb.from('profiles').select('full_name,email,cgu_accepted_at,approved,is_admin').eq('id',u.user.id).single();
     if(!p||!p.approved){KICK=MSG.not_approved;ME=null;try{await sb.auth.signOut({scope:'local'})}catch(_){}return}
     c={name:p.full_name,email:p.email,cgu:!!p.cgu_accepted_at,admin:!!p.is_admin}}
-  ME=c; accepted=!!c.cgu; VIEWER=c.name+' · '+c.email; drawWatermark(); $('whoName').textContent=c.name;
+  ME=c; accepted=!!c.cgu; VIEWER=c.name+' · '+c.email; drawWatermark(); $('whoName').textContent=c.name; loadCanAnswer();
 }
 $('logout').onclick=async()=>{ME=null;try{await sb.auth.signOut({scope:'local'})}catch(_){}location.hash='';route()};
 
@@ -1565,7 +1565,12 @@ $('askForm').addEventListener('submit',async e=>{
   else {$('ask').hidden=true;kick(d.reason)}
 });
 /* administration : répondre aux questions */
-let qTab='a_traiter';
+let qTab='a_traiter', canAnswer=false;
+async function loadCanAnswer(){
+  canAnswer=false;
+  try{const {data:u}=await sb.auth.getUser(); if(u&&u.user){const {data:p}=await sb.from('profiles').select('can_answer').eq('id',u.user.id).single(); canAnswer=!!(p&&p.can_answer)}}catch(_){}
+  $('qBtn').hidden=!(ME&&(ME.admin||canAnswer));
+}
 async function qLoad(){
   $('qTabA').setAttribute('aria-pressed',qTab==='a_traiter'); $('qTabB').setAttribute('aria-pressed',qTab==='repondu');
   const {data:r}=await sb.rpc('admin_list_questions',{p_status:qTab}); const L=$('qList'); L.textContent='';
@@ -1595,7 +1600,7 @@ $('qTabA').onclick=()=>{qTab='a_traiter';qLoad()}; $('qTabB').onclick=()=>{qTab=
 
 function route(){
   if(!/^#fiche-/.test(location.hash))$('ask').hidden=true;
-  $('qBtn').hidden=!(ME&&ME.admin);
+  $('qBtn').hidden=!(ME&&(ME.admin||canAnswer));
   $('admBtn').hidden=!(ME&&ME.admin);
   const it=INV();
   if(it){ if(ME){location.hash='';return} return showInvite(it) }
