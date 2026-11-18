@@ -242,12 +242,19 @@ body.askopen .askbar{display:none}
 @media (max-height:520px){.askbar{left:max(14px,env(safe-area-inset-left));right:auto;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 6px);width:min(220px,calc(100vw - 28px))}.askpill{height:46px}.askchips{right:auto;left:0;align-items:flex-start}.asknote{right:auto;left:14px}}
 /* téléphone / tablette : pas de bouton « Suivant », la barre se range à droite des points de progression */
 @media (hover:none) and (pointer:coarse) and (min-height:521px){
-  .askbar{width:min(176px,calc(100vw - 28px))}
-  .askbar:focus-within{width:calc(100vw - 28px)}
-  .askbar:not(:focus-within) .asksend{display:none}
-  .askpill{height:46px}
-  #fiche .bottom{padding-right:192px}
+  .askbar{width:52px}
+  .askbar.open,.askbar:focus-within{width:calc(100vw - 28px)}
+  .askbar:not(.open):not(:focus-within) .askfield,.askbar:not(.open):not(:focus-within) .asksend{display:none}
+  .askbar:not(.open):not(:focus-within) .askpill{width:52px;height:52px;padding:0;justify-content:center;border-radius:50%}
+  .askbar:not(.open):not(:focus-within) .askav{width:38px;height:38px}
+  .askbar:not(.open):not(:focus-within) .askav svg{width:20px;height:20px}
+  .askbar.open .askchip{opacity:1;transform:none;pointer-events:auto}
+  .askbar.open .asknote{opacity:1}
+  #fiche .bottom{padding-right:80px}
 }
+/* le symbole remue légèrement toutes les 5 s pour signaler le chat */
+@keyframes askwig{0%,16%,100%{transform:none}3%{transform:rotate(-16deg) scale(1.12)}6%{transform:rotate(13deg) scale(1.12)}9%{transform:rotate(-8deg) scale(1.06)}12%{transform:rotate(4deg)}}
+.askbar:not(:focus-within):not(.open) #askOpen svg{animation:askwig 5s ease-in-out 2s infinite;transform-origin:50% 55%}
 
 /* panneau de conversation */
 .fin{position:fixed;z-index:50;right:max(20px,env(safe-area-inset-right));bottom:max(20px,env(safe-area-inset-bottom));width:min(404px,calc(100vw - 24px));
@@ -301,7 +308,7 @@ body.askopen .askbar{display:none}
 .finform:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(29,111,181,.14)}
 .finform textarea{flex:1;min-width:0;border:0;outline:0;resize:none;background:transparent;font-size:16px;line-height:1.35;padding:6px 0;min-height:30px;max-height:110px}
 .finnote{margin:7px 6px 0;font-size:11.5px;color:var(--muted);text-align:center;line-height:1.35}
-@media (prefers-reduced-motion:reduce){.fin,.msg,.welcome,.fchips,.srcrow,.acts2,.handoff,.sysnote,.finmine,.typing i{animation:none}.askbar,.askchip,.askph{transition:none}}
+@media (prefers-reduced-motion:reduce){#askOpen svg{animation:none!important}.fin,.msg,.welcome,.fchips,.srcrow,.acts2,.handoff,.sysnote,.finmine,.typing i{animation:none}.askbar,.askchip,.askph{transition:none}}
 .qadm .cl{align-self:flex-end;height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:600}
 .qadm{max-width:640px!important;max-height:88vh;overflow:auto}
 .qadm .tabs{display:flex;gap:6px}
@@ -1748,7 +1755,12 @@ async function sendQ(raw){
 }
 
 /* barre flottante */
-$('askOpen').onclick=()=>openAsk(true);
+$('askOpen').onclick=()=>{
+  const small=touchy.matches&&matchMedia('(min-height:521px)').matches;
+  if(small&&!$('askBar').classList.contains('open')&&document.activeElement!==$('askBarIn')){$('askBar').classList.add('open'); $('askBarIn').focus()}   /* téléphone : la pastille se déploie en barre */
+  else openAsk(true);
+};
+$('askBarIn').addEventListener('blur',()=>{ if(!$('askBarIn').value) setTimeout(()=>{ if(document.activeElement!==$('askBarIn')&&!$('askBar').contains(document.activeElement))$('askBar').classList.remove('open') },160) });
 $('askBarIn').addEventListener('input',()=>$('askBarGo').classList.toggle('on',$('askBarIn').value.trim().length>=3));
 $('askBarIn').addEventListener('keydown',e=>{if(e.key==='Escape')$('askBarIn').blur()});
 $('askBarForm').addEventListener('submit',e=>{e.preventDefault(); const q=$('askBarIn').value; if(q.trim().length<3)return; $('askBarIn').blur(); sendQ(q)});
