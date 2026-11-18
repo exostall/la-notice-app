@@ -215,50 +215,37 @@ textarea{-webkit-user-select:text;user-select:text;font:inherit;color:var(--fg)}
 .asksend.on:active{transform:scale(.92)}
 
 /* barre flottante : pastille, puis barre large avec questions suggérées quand on la touche */
-.askbar{position:fixed;z-index:30;right:max(14px,env(safe-area-inset-right));bottom:calc(max(12px,env(safe-area-inset-bottom)) + 14px);
-  width:min(258px,calc(100vw - 28px));transition:width .3s cubic-bezier(.3,.7,.2,1)}
-.askbar:focus-within{width:min(580px,calc(100vw - 28px))}
-body.askopen .askbar{display:none}
+.askbar{position:fixed;z-index:30;right:max(14px,env(safe-area-inset-right));bottom:calc(max(12px,env(safe-area-inset-bottom)) + 14px);width:52px;transition:width .3s cubic-bezier(.3,.7,.2,1)}
+.askbar.open{width:min(580px,calc(100vw - 28px))}
 .askpill{position:relative;display:flex;align-items:center;gap:8px;height:52px;padding:0 9px;border-radius:26px;background:var(--surface);
   border:1px solid var(--line);box-shadow:0 8px 26px rgba(20,35,47,.2);margin:0}
+.askbar:not(.open) .askpill{width:52px;padding:0;justify-content:center;border-radius:50%}
+.askbar:not(.open) .askfield,.askbar:not(.open) .asksend{display:none}
+.askbar:not(.open) .askav{width:38px;height:38px}
+.askbar:not(.open) .askav svg{width:20px;height:20px}
+body.askopen #askOpen{background:var(--accent);color:var(--accent-fg)}
 .askfield{position:relative;flex:1;min-width:0;height:100%}
 .askfield input{width:100%;height:100%;border:0;background:transparent;font:inherit;font-size:16px;color:var(--fg);outline:0;padding:0;
   -webkit-user-select:text;user-select:text}
-.askfield input::placeholder{color:transparent}
-.askbar:focus-within .askfield input::placeholder{color:var(--muted)}
-.askph{position:absolute;inset:0;display:flex;align-items:center;color:var(--muted);font-size:14.5px;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;pointer-events:none;transition:opacity .35s}
-.askph.out{opacity:0}
-.askbar:focus-within .askph{display:none}
-.askchips{position:absolute;right:0;bottom:calc(100% + 10px);display:flex;flex-direction:column;align-items:flex-end;gap:8px;max-width:100%;pointer-events:none}
-.askchip{max-width:100%;border:0;border-radius:21px;padding:10px 16px;background:rgba(20,35,47,.8);color:#fff;font-size:14.5px;line-height:1.3;text-align:left;
-  opacity:0;transform:translateY(10px);transition:opacity .22s ease,transform .22s ease,background .15s;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-.askchip:nth-child(2){transition-delay:.04s}.askchip:nth-child(3){transition-delay:.08s}
-.askbar:focus-within .askchip{opacity:1;transform:none;pointer-events:auto}
-.askchip:hover{background:rgba(20,35,47,.92)}
+.askfield input::placeholder{color:var(--muted)}
 .asknote{position:absolute;right:14px;top:calc(100% + 6px);margin:0;font-size:11.5px;color:var(--muted);white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none}
-.askbar:focus-within .asknote{opacity:1}
-@media (prefers-color-scheme: dark){.askchip{background:rgba(230,238,244,.22)}.askchip:hover{background:rgba(230,238,244,.32)}}
-@media (max-height:520px){.askbar{left:max(14px,env(safe-area-inset-left));right:auto;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 6px);width:min(220px,calc(100vw - 28px))}.askpill{height:46px}.askchips{right:auto;left:0;align-items:flex-start}.asknote{right:auto;left:14px}}
-/* téléphone / tablette : pas de bouton « Suivant », la barre se range à droite des points de progression */
-@media (hover:none) and (pointer:coarse) and (min-height:521px){
-  .askbar{width:52px}
-  .askbar.open,.askbar:focus-within{width:calc(100vw - 28px)}
-  .askbar:not(.open):not(:focus-within) .askfield,.askbar:not(.open):not(:focus-within) .asksend{display:none}
-  .askbar:not(.open):not(:focus-within) .askpill{width:52px;height:52px;padding:0;justify-content:center;border-radius:50%}
-  .askbar:not(.open):not(:focus-within) .askav{width:38px;height:38px}
-  .askbar:not(.open):not(:focus-within) .askav svg{width:20px;height:20px}
-  .askbar.open .askchip{opacity:1;transform:none;pointer-events:auto}
-  .askbar.open .asknote{opacity:1}
-  #fiche .bottom{padding-right:80px}
+.askbar.open .asknote{opacity:1}
+#fiche:has(.askbar.open) .hint{opacity:0}   /* la mention « aucune donnée de patient » prend la place de l'aide */
+@media (max-height:520px){
+  .askbar{left:max(14px,env(safe-area-inset-left));right:auto;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 6px);width:46px}
+  .askbar.open{width:min(480px,calc(100vw - 28px))}
+  .askpill,.askbar:not(.open) .askpill{height:46px}.askbar:not(.open) .askpill{width:46px}
+  .asknote{right:auto;left:14px}
 }
+/* téléphone / tablette : pas de bouton « Suivant », la pastille se range à droite des points de progression */
+@media (hover:none) and (pointer:coarse) and (min-height:521px){#fiche .bottom{padding-right:80px}}
 /* le symbole remue légèrement toutes les 5 s pour signaler le chat */
 @keyframes askwig{0%,16%,100%{transform:none}3%{transform:rotate(-16deg) scale(1.12)}6%{transform:rotate(13deg) scale(1.12)}9%{transform:rotate(-8deg) scale(1.06)}12%{transform:rotate(4deg)}}
-.askbar:not(:focus-within):not(.open) #askOpen svg{animation:askwig 5s ease-in-out 2s infinite;transform-origin:50% 55%}
+body:not(.askopen) .askbar:not(.open) #askOpen svg{animation:askwig 5s ease-in-out 2s infinite;transform-origin:50% 55%}
 
 /* panneau de conversation */
-.fin{position:fixed;z-index:50;right:max(20px,env(safe-area-inset-right));bottom:max(20px,env(safe-area-inset-bottom));width:min(404px,calc(100vw - 24px));
-  height:min(668px,calc(100vh - 40px));height:min(668px,calc(100dvh - 40px));display:flex;flex-direction:column;background:var(--surface);color:var(--fg);
+.fin{position:fixed;z-index:50;right:max(20px,env(safe-area-inset-right));bottom:calc(max(12px,env(safe-area-inset-bottom)) + 88px);width:min(404px,calc(100vw - 24px));
+  height:min(668px,calc(100vh - 120px));height:min(668px,calc(100dvh - 120px));display:flex;flex-direction:column;background:var(--surface);color:var(--fg);
   border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 54px rgba(14,22,29,.3);overflow:hidden;animation:finIn .28s cubic-bezier(.2,.8,.2,1)}
 @keyframes finIn{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
 @keyframes finUp{from{opacity:0;transform:translateY(48px)}to{opacity:1;transform:none}}
@@ -417,7 +404,7 @@ body.askopen .askbar{display:none}
 <div class="fin" id="ask" hidden role="dialog" aria-modal="false" aria-labelledby="askT">
   <div class="finh">
     <button class="icb" id="askBack" type="button" aria-label="Fermer la conversation" data-ico="back"></button>
-    <span class="askav big" data-ico="chat"></span>
+    <button class="askav big" id="askAv" type="button" aria-label="Ranger le chat" data-ico="chat"></button>
     <div class="fint"><b id="askT">Assistant La Notice</b><span>Léa et Florian peuvent aussi répondre</span></div>
     <button class="icb" id="askClose" type="button" aria-label="Réduire" data-ico="down"></button>
   </div>
@@ -488,10 +475,9 @@ body.askopen .askbar{display:none}
   </div>
   <p class="hint" id="hint"></p>
   <div class="askbar" id="askBar">
-    <div class="askchips" id="askChips"></div>
     <form class="askpill" id="askBarForm" autocomplete="off">
       <button class="askav" id="askOpen" type="button" aria-label="Ouvrir la conversation" data-ico="chat"></button>
-      <span class="askfield"><input id="askBarIn" type="text" maxlength="600" placeholder="Posez votre question…" aria-label="Poser une question sur cette fiche" enterkeyhint="send"><span class="askph" id="askPh"></span></span>
+      <span class="askfield"><input id="askBarIn" type="text" maxlength="600" placeholder="Posez votre question…" aria-label="Poser une question sur cette fiche" enterkeyhint="send"></span>
       <button class="asksend" id="askBarGo" type="submit" aria-label="Envoyer" data-ico="up"></button>
     </form>
     <p class="asknote">Aucune donnée de patient · réponses relues par Léa et Florian</p>
@@ -1645,15 +1631,6 @@ function suggestions(){
   return s?['Explique-moi « '+clip(s,40)+' » simplement','Quelles erreurs fréquentes éviter ici ?','Existe-t-il une alternative à cette étape ?']
           :['Quand utiliser cette fiche ?','Quelles sont les erreurs fréquentes ?','Résume le protocole en 5 points'];
 }
-function renderChips(){
-  const C=$('askChips'); C.textContent='';
-  suggestions().forEach(t=>{
-    const b=nd('button','askchip',t); b.type='button';
-    b.addEventListener('mousedown',e=>e.preventDefault());      /* garde le focus dans la barre */
-    b.onclick=()=>sendQ(t); C.append(b);
-  });
-}
-const touchy=matchMedia('(hover:none) and (pointer:coarse)');
 function placeBar(){
   const b=$('askBar'); if(!b||$('fiche').hidden)return;
   if(matchMedia('(max-height:520px)').matches){b.style.right=b.style.bottom='';return}
@@ -1661,10 +1638,8 @@ function placeBar(){
   if(n.width>0){b.style.right=Math.round(innerWidth-n.left+10)+'px'; b.style.bottom=Math.round(innerHeight-(n.top+n.height/2)-H/2)+'px'}   /* à gauche de Commencer / Suivant */
   else{b.style.right='14px'; b.style.bottom=Math.round(innerHeight-(bt.top+bt.height/2)-H/2)+'px'}                                              /* téléphone : à droite des points */
 }
-function askRefresh(){ if(!F)return; const L=suggestions(); $('askPh').textContent=touchy.matches?'Une question ?':L[phI%L.length]; renderChips(); placeBar() }
+const askRefresh=placeBar;
 addEventListener('resize',placeBar); if(document.fonts&&document.fonts.ready)document.fonts.ready.then(placeBar);
-function phTick(){ const e=$('askPh'); e.classList.add('out'); setTimeout(()=>{phI++; askRefresh(); e.classList.remove('out')},350) }
-setInterval(()=>{ if(!F||$('fiche').hidden||document.hidden||touchy.matches||document.activeElement===$('askBarIn'))return; phTick() },3800);
 new MutationObserver(askRefresh).observe($('ttl'),{childList:true,characterData:true,subtree:true});
 
 /* les réponses de Léa et Florian aux questions déjà posées sur cette fiche */
@@ -1755,15 +1730,23 @@ async function sendQ(raw){
 }
 
 /* barre flottante */
+const collapseBar=()=>{$('askBar').classList.remove('open'); if(document.activeElement===$('askBarIn'))$('askBarIn').blur()};
+/* la pastille : un clic déploie la barre, un second clic range tout ; avec une conversation en cours, elle rouvre le panneau */
 $('askOpen').onclick=()=>{
-  const small=touchy.matches&&matchMedia('(min-height:521px)').matches;
-  if(small&&!$('askBar').classList.contains('open')&&document.activeElement!==$('askBarIn')){$('askBar').classList.add('open'); $('askBarIn').focus()}   /* téléphone : la pastille se déploie en barre */
-  else openAsk(true);
+  if(!$('ask').hidden){closeAsk(); return}
+  if($('askBar').classList.contains('open')){collapseBar(); return}
+  if(F&&askFiche===F.id&&chat.length){openAsk(true); return}
+  $('askBar').classList.add('open'); $('askBarIn').focus();
 };
-$('askBarIn').addEventListener('blur',()=>{ if(!$('askBarIn').value) setTimeout(()=>{ if(document.activeElement!==$('askBarIn')&&!$('askBar').contains(document.activeElement))$('askBar').classList.remove('open') },160) });
+$('askAv').onclick=closeAsk;
+/* un clic ailleurs range le chat : on n'a pas envie d'interagir avec lui */
+document.addEventListener('pointerdown',e=>{
+  const t=e.target; if(!t||!t.closest||t.closest('#askBar,#ask'))return;
+  if(!$('ask').hidden)closeAsk(); if($('askBar').classList.contains('open'))collapseBar();
+},true);
 $('askBarIn').addEventListener('input',()=>$('askBarGo').classList.toggle('on',$('askBarIn').value.trim().length>=3));
-$('askBarIn').addEventListener('keydown',e=>{if(e.key==='Escape')$('askBarIn').blur()});
-$('askBarForm').addEventListener('submit',e=>{e.preventDefault(); const q=$('askBarIn').value; if(q.trim().length<3)return; $('askBarIn').blur(); sendQ(q)});
+$('askBarIn').addEventListener('keydown',e=>{if(e.key==='Escape')collapseBar()});
+$('askBarForm').addEventListener('submit',e=>{e.preventDefault(); const q=$('askBarIn').value; if(q.trim().length<3)return; $('askBar').classList.remove('open'); $('askBarIn').blur(); sendQ(q)});
 /* panneau */
 $('askClose').onclick=closeAsk; $('askBack').onclick=closeAsk;
 $('askIn').addEventListener('input',()=>{const t=$('askIn'); t.style.height='auto'; t.style.height=Math.min(110,t.scrollHeight)+'px'; $('askGo').classList.toggle('on',t.value.trim().length>=3)});
